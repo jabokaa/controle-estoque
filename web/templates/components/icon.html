@@ -1,0 +1,30 @@
+{{/*
+    Ícones em SVG (traço simples, herdam a cor do texto).
+    Uso: {{template "components/icon" "tag"}}
+*/}}
+{{define "components/icon"}}
+<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    {{if eq . "home"}}
+        <path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>
+    {{else if eq . "tag"}}
+        <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/>
+    {{else if eq . "package"}}
+        <path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/><path d="m7.5 5.5 9 5"/>
+    {{else if eq . "box"}}
+        <path d="M21 8 12 3 3 8v8l9 5 9-5Z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/>
+    {{else if eq . "arrows"}}
+        <path d="M7 4v16"/><path d="m3 8 4-4 4 4"/><path d="M17 20V4"/><path d="m21 16-4 4-4-4"/>
+    {{else if eq . "chart"}}
+        <path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>
+    {{else if eq . "plus"}}
+        <path d="M12 5v14"/><path d="M5 12h14"/>
+    {{else if eq . "arrow-right"}}
+        <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
+    {{else if eq . "inbox"}}
+        <path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6Z"/>
+    {{else if eq . "menu"}}
+        <path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>
+    {{end}}
+</svg>
+{{end}}

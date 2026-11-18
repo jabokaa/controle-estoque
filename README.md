@@ -68,7 +68,10 @@ controle-estoque/
 │       ├── database/               # conexão com o banco
 │       └── repository/             # implementações SQL
 ├── web/
-│   ├── templates/                  # páginas HTML (front em Go)
+│   ├── templates/                  # front em Go (html/template)
+│   │   ├── layouts/                # estrutura das páginas (menu lateral, scripts)
+│   │   ├── components/             # componentes reutilizáveis (ícones, cabeçalho, estado vazio...)
+│   │   └── pages/                  # as telas renderizadas pelos handlers
 │   └── static/css/                 # estilos
 ├── docs/                           # diagrama da arquitetura
 └── go.mod

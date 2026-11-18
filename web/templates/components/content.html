@@ -1,0 +1,55 @@
+{{/* Componentes de conteúdo usados dentro das páginas. */}}
+
+{{/*
+    Cabeçalho da página.
+    Parâmetros: Title, Eyebrow (texto pequeno acima do título), Subtitle,
+                ActionLabel + ActionURL (botão principal à direita, opcional).
+*/}}
+{{define "components/page_header"}}
+<header class="page-header">
+    <div>
+        {{if .Eyebrow}}<p class="page-eyebrow">{{.Eyebrow}}</p>{{end}}
+        <h1 class="page-title">{{.Title}}</h1>
+        {{if .Subtitle}}<p class="page-subtitle">{{.Subtitle}}</p>{{end}}
+    </div>
+    {{if .ActionURL}}
+    <a class="btn btn-primary" href="{{.ActionURL}}">
+        {{template "components/icon" "plus"}}
+        {{.ActionLabel}}
+    </a>
+    {{end}}
+</header>
+{{end}}
+
+{{/*
+    Mensagem para listas vazias.
+    Parâmetros: Icon, Title, Message.
+*/}}
+{{define "components/empty_state"}}
+<div class="empty-state">
+    <div class="empty-state-icon">{{template "components/icon" .Icon}}</div>
+    <h3 class="empty-state-title">{{.Title}}</h3>
+    <p class="empty-state-message">{{.Message}}</p>
+</div>
+{{end}}
+
+{{/*
+    Cartão de atalho para um módulo do sistema.
+    Parâmetros: Icon, Title, Description, URL, Soon (bool: ainda não disponível).
+*/}}
+{{define "components/module_card"}}
+{{if .Soon}}
+<div class="module-card is-soon" aria-disabled="true">
+    <span class="module-icon">{{template "components/icon" .Icon}}</span>
+    <h3 class="module-title">{{.Title}} <span class="soon-badge">em breve</span></h3>
+    <p class="module-description">{{.Description}}</p>
+</div>
+{{else}}
+<a class="module-card" href="{{.URL}}">
+    <span class="module-icon">{{template "components/icon" .Icon}}</span>
+    <h3 class="module-title">{{.Title}}</h3>
+    <p class="module-description">{{.Description}}</p>
+    <span class="module-link">Acessar {{template "components/icon" "arrow-right"}}</span>
+</a>
+{{end}}
+{{end}}

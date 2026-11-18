@@ -1,0 +1,53 @@
+{{template "layout/start" (dict "Title" "Categorias" "Active" "categories")}}
+
+{{template "components/page_header" (dict
+    "Eyebrow" "Cadastros"
+    "Title" "Categorias"
+    "Subtitle" "Organize os itens do estoque por categoria."
+)}}
+
+<section class="panel">
+    <div class="panel-header">
+        <h2 class="panel-title">Todas as categorias</h2>
+        <span class="count-badge">{{len .Categories}}</span>
+    </div>
+
+    {{if .Categories}}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th scope="col">Categoria</th>
+                    <th scope="col">Descrição</th>
+                    <th scope="col">Criada em</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Categories}}
+                <tr>
+                    <td>
+                        <div class="cell-entity">
+                            <span class="entity-avatar">{{template "components/icon" "tag"}}</span>
+                            <div>
+                                <span class="entity-name">{{.Name}}</span>
+                                <span class="entity-id">#{{.ID}}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{if .Description}}{{.Description}}{{else}}<span class="text-soft">—</span>{{end}}</td>
+                    <td class="cell-date">{{.CreatedAt.Format "02/01/2006"}}<small>{{.CreatedAt.Format "15:04"}}</small></td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    {{template "components/empty_state" (dict
+        "Icon" "inbox"
+        "Title" "Nenhuma categoria cadastrada"
+        "Message" "Quando você cadastrar categorias, elas vão aparecer aqui."
+    )}}
+    {{end}}
+</section>
+
+{{template "layout/end"}}

@@ -1,0 +1,73 @@
+{{/* Componentes de navegação: marca, menu lateral, item do menu e barra do topo (celular). */}}
+
+{{/* Logo + nome do sistema. */}}
+{{define "components/brand"}}
+<a class="brand" href="/">
+    <span class="brand-mark">{{template "components/icon" "package"}}</span>
+    <span class="brand-text">
+        <small>Controle de</small>
+        <strong>Estoque</strong>
+    </span>
+</a>
+{{end}}
+
+{{/*
+    Menu lateral. Recebe o nome da página ativa ("home", "categories"...).
+    No computador fica fixo à esquerda; no celular vira uma gaveta (offcanvas do Bootstrap).
+*/}}
+{{define "components/sidebar"}}
+<aside class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebar" aria-label="Menu principal">
+    <div class="sidebar-inner">
+        <div class="sidebar-header">
+            {{template "components/brand"}}
+            <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas"
+                    data-bs-target="#sidebar" aria-label="Fechar menu"></button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <span class="sidebar-section">Geral</span>
+            {{template "components/nav_item" (dict "Label" "Início" "URL" "/" "Icon" "home" "Active" (eq . "home"))}}
+
+            <span class="sidebar-section">Cadastros</span>
+            {{template "components/nav_item" (dict "Label" "Categorias" "URL" "/categories" "Icon" "tag" "Active" (eq . "categories"))}}
+            {{template "components/nav_item" (dict "Label" "Itens" "Icon" "box" "Soon" true)}}
+
+            <span class="sidebar-section">Operação</span>
+            {{template "components/nav_item" (dict "Label" "Movimentações" "Icon" "arrows" "Soon" true)}}
+            {{template "components/nav_item" (dict "Label" "Relatórios" "Icon" "chart" "Soon" true)}}
+        </nav>
+
+        <div class="sidebar-footer">v0.1 · feito em Go</div>
+    </div>
+</aside>
+{{end}}
+
+{{/*
+    Item do menu lateral.
+    Parâmetros: Label, URL, Icon, Active (bool), Soon (bool: ainda não disponível).
+*/}}
+{{define "components/nav_item"}}
+{{if .Soon}}
+<span class="nav-link-item is-disabled" aria-disabled="true">
+    {{template "components/icon" .Icon}}
+    <span>{{.Label}}</span>
+    <span class="soon-badge">em breve</span>
+</span>
+{{else}}
+<a class="nav-link-item{{if .Active}} is-active{{end}}" href="{{.URL}}"{{if .Active}} aria-current="page"{{end}}>
+    {{template "components/icon" .Icon}}
+    <span>{{.Label}}</span>
+</a>
+{{end}}
+{{end}}
+
+{{/* Barra do topo, só aparece no celular, com o botão que abre o menu lateral. */}}
+{{define "components/topbar"}}
+<header class="topbar d-lg-none">
+    {{template "components/brand"}}
+    <button class="topbar-menu" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar"
+            aria-controls="sidebar" aria-label="Abrir menu">
+        {{template "components/icon" "menu"}}
+    </button>
+</header>
+{{end}}
