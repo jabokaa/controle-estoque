@@ -9,14 +9,18 @@
 //	label    → nome do campo nas mensagens de erro
 //	validate → regras (https://pkg.go.dev/github.com/go-playground/validator/v10)
 //
+// Tipos de campo aceitos: string, int e []UploadedFile (arquivos de formulário multipart).
+//
 // O handler chama Parse, que faz o papel do $request->validated() do Laravel.
 package request
 
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -53,6 +57,17 @@ func (validationErrors ValidationErrors) Get(field string) string {
 	return validationErrors[field]
 }
 
+// Summary junta todas as mensagens numa frase (em ordem de campo, sempre a mesma),
+// para telas que mostram os erros num só lugar, como o chat.
+func (validationErrors ValidationErrors) Summary() string {
+	fields := slices.Sorted(maps.Keys(validationErrors))
+	messages := make([]string, 0, len(fields))
+	for _, field := range fields {
+		messages = append(messages, validationErrors[field])
+	}
+	return strings.Join(messages, " ")
+}
+
 var (
 	validate   = validator.New(validator.WithRequiredStructEnabled())
 	translator universalTranslator.Translator
@@ -79,6 +94,11 @@ func init() {
 		panic(err)
 	}
 
+	// Regras de arquivo: file_types e file_max_size (uploaded_file.go).
+	if err := registerFileRules(); err != nil {
+		panic(err)
+	}
+
 	// Nas mensagens, usa o label do campo ("Nome") em vez do nome Go ("Name").
 	validate.RegisterTagNameFunc(func(field reflect.StructField) string {
 		if label := field.Tag.Get("label"); label != "" {
@@ -98,9 +118,9 @@ func init() {
 func Parse(httpRequest *http.Request, target any) ValidationErrors {
 	_, resetsInvalidFields := target.(InvalidFieldResetter)
 
-	// Trata o parsing do formulário.
-	if err := httpRequest.ParseForm(); err != nil {
-		return ValidationErrors{"_form": "Não foi possível ler os dados enviados."}
+	// Lê o formulário: multipart (com arquivos) ou comum / query string.
+	if err := parseRequestBody(httpRequest); err != nil {
+		return ValidationErrors{"_form": "Não foi possível ler os dados enviados (os arquivos podem ser grandes demais)."}
 	}
 
 	// Pega o tipo e valor da struct de destino.
@@ -113,13 +133,28 @@ func Parse(httpRequest *http.Request, target any) ValidationErrors {
 		// Pega o campo da struct e o valor enviado no formulário.
 		field := targetType.Field(index)
 		formName := field.Tag.Get("form")
-		rawValue := strings.TrimSpace(httpRequest.Form.Get(formName))
-		if formName == "" || rawValue == "" {
+		if formName == "" {
+			continue
+		}
+		fieldValue := targetValue.Field(index)
+
+		// Arquivos: lidos do multipart, com o tipo real detectado pelo conteúdo.
+		if field.Type == uploadedFilesType {
+			files, err := readUploadedFiles(httpRequest, formName)
+			if err != nil {
+				validationErrors[formName] = capitalizeFirst(err.Error()) + "."
+				continue
+			}
+			fieldValue.Set(reflect.ValueOf(files))
 			continue
 		}
 
-		// Pega o tipo e valor do campo da struct.
-		fieldValue := targetValue.Field(index)
+		rawValue := strings.TrimSpace(httpRequest.Form.Get(formName))
+		if rawValue == "" {
+			continue
+		}
+
+		// Converte o texto para o tipo do campo.
 		switch fieldValue.Kind() {
 		case reflect.String:
 			fieldValue.SetString(rawValue)
@@ -143,14 +178,15 @@ func Parse(httpRequest *http.Request, target any) ValidationErrors {
 			return ValidationErrors{"_form": err.Error()}
 		}
 		for _, fieldError := range fieldErrors {
-			structField, _ := targetType.FieldByName(fieldError.StructField())
+			fieldName := topLevelFieldName(fieldError)
+			structField, _ := targetType.FieldByName(fieldName)
 			formName := structField.Tag.Get("form")
 			if validationErrors.Has(formName) {
-				continue // já tem erro de conversão ("deve ser um número"), que é mais útil
+				continue // já tem um erro desse campo (ex.: conversão ou outro arquivo da lista)
 			}
 			validationErrors[formName] = fieldError.Translate(translator) + "."
 			if resetsInvalidFields {
-				targetValue.FieldByName(fieldError.StructField()).SetZero()
+				targetValue.FieldByName(fieldName).SetZero()
 			}
 		}
 	}
@@ -162,6 +198,38 @@ func Parse(httpRequest *http.Request, target any) ValidationErrors {
 		applyDefaults(target) // devolve o valor padrão aos campos que foram zerados por serem inválidos
 	}
 	return validationErrors
+}
+
+// parseRequestBody lê os dados enviados. Formulários com arquivos (multipart) precisam
+// de ParseMultipartForm; os demais (e a query string do GET), de ParseForm.
+func parseRequestBody(httpRequest *http.Request) error {
+	if strings.HasPrefix(httpRequest.Header.Get("Content-Type"), "multipart/form-data") {
+		return httpRequest.ParseMultipartForm(maxMultipartMemory)
+	}
+	return httpRequest.ParseForm()
+}
+
+// topLevelFieldName devolve o campo da struct do request a que o erro pertence.
+// Num erro de item de lista, como "SendAssistantMessageRequest.Attachments[1]",
+// o campo é "Attachments".
+func topLevelFieldName(fieldError validator.FieldError) string {
+	parts := strings.Split(fieldError.StructNamespace(), ".")
+	name := fieldError.StructField()
+	if len(parts) > 1 {
+		name = parts[1]
+	}
+	if bracket := strings.Index(name, "["); bracket >= 0 {
+		name = name[:bracket]
+	}
+	return name
+}
+
+func capitalizeFirst(text string) string {
+	if text == "" {
+		return text
+	}
+	runes := []rune(text)
+	return strings.ToUpper(string(runes[0])) + string(runes[1:])
 }
 
 func applyDefaults(target any) {

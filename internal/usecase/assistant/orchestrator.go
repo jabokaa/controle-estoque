@@ -67,6 +67,7 @@ func (orchestrator *Orchestrator) FindConversation(ctx context.Context, id strin
 // Erros do modelo não são devolvidos como erro: viram uma resposta com Failed = true, para a
 // conversa continuar (e para as ações já feitas aparecerem). Só erros de entrada são devolvidos.
 func (orchestrator *Orchestrator) SendMessage(ctx context.Context, input SendMessageInput) (Conversation, Turn, error) {
+	// remove espaços em branco do início e fim da mensagem
 	text := strings.TrimSpace(input.Text)
 	if text == "" && len(input.Attachments) == 0 {
 		return Conversation{}, Turn{}, ErrEmptyMessage
@@ -88,6 +89,7 @@ func (orchestrator *Orchestrator) SendMessage(ctx context.Context, input SendMes
 
 	lock, _ := orchestrator.conversationLocks.LoadOrStore(conversation.ID, &sync.Mutex{})
 	lock.(*sync.Mutex).Lock()
+	//Libera o lock ao final da função para isso serve o defer abaixo.
 	defer lock.(*sync.Mutex).Unlock()
 
 	// Anexos: ficam guardados na conversa; o orquestrador só vê os IDs (o agente de nota

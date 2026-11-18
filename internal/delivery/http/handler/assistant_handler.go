@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"errors"
-	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -16,18 +13,10 @@ const (
 	// assistantCookieName guarda o ID da conversa atual no navegador.
 	assistantCookieName = "assistant_conversation"
 
-	maxAttachmentSize = 5 << 20  // 5 MB por arquivo (limite de imagem da API)
-	maxRequestSize    = 16 << 20 // 16 MB por envio (até 3 arquivos + texto)
+	// maxRequestSize corta envios gigantes antes de lê-los (proteção do servidor).
+	// As regras de cada arquivo (tipo, tamanho, quantidade) ficam no SendAssistantMessageRequest.
+	maxRequestSize = 16 << 20
 )
-
-// allowedAttachmentTypes são os tipos aceitos, detectados pelo conteúdo do arquivo.
-var allowedAttachmentTypes = map[string]bool{
-	"image/jpeg":      true,
-	"image/png":       true,
-	"image/gif":       true,
-	"image/webp":      true,
-	"application/pdf": true,
-}
 
 // assistantSuggestions são os exemplos clicáveis da conversa vazia.
 var assistantSuggestions = []string{
@@ -74,22 +63,11 @@ func (assistantHandler *AssistantHandler) Show(writer http.ResponseWriter, httpR
 // Com HTMX, devolve só o trecho da nova troca para ser adicionado ao chat.
 func (assistantHandler *AssistantHandler) Send(writer http.ResponseWriter, httpRequest *http.Request) {
 	httpRequest.Body = http.MaxBytesReader(writer, httpRequest.Body, maxRequestSize)
-	if err := httpRequest.ParseMultipartForm(maxRequestSize); err != nil && !errors.Is(err, http.ErrNotMultipart) {
-		assistantHandler.respondError(writer, httpRequest, "", "Os arquivos são grandes demais. Envie até 3 arquivos de no máximo 5 MB cada.")
-		return
-	}
 
-	// 1. FormRequest (texto)
+	// 1. FormRequest: texto e arquivos (quantidade, tipo real e tamanho)
 	var form request.SendAssistantMessageRequest
 	if validationErrors := request.Parse(httpRequest, &form); validationErrors != nil {
-		assistantHandler.respondError(writer, httpRequest, form.Message, validationErrors.Get("message"))
-		return
-	}
-
-	// 2. Anexos
-	attachments, err := readAttachments(httpRequest)
-	if err != nil {
-		assistantHandler.respondError(writer, httpRequest, form.Message, err.Error())
+		assistantHandler.respondError(writer, httpRequest, form.Message, validationErrors.Summary())
 		return
 	}
 
@@ -99,16 +77,12 @@ func (assistantHandler *AssistantHandler) Send(writer http.ResponseWriter, httpR
 		return
 	}
 
-	// 3. Caso de uso (orquestrador + agentes)
+	// 2. Caso de uso (orquestrador + agentes)
 	conversationID := ""
 	if cookie, err := httpRequest.Cookie(assistantCookieName); err == nil {
 		conversationID = cookie.Value
 	}
-	conversation, turn, err := assistantHandler.orchestrator.SendMessage(httpRequest.Context(), assistant.SendMessageInput{
-		ConversationID: conversationID,
-		Text:           form.Message,
-		Attachments:    attachments,
-	})
+	conversation, turn, err := assistantHandler.orchestrator.SendMessage(httpRequest.Context(), form.ToInput(conversationID))
 	if err != nil {
 		assistantHandler.respondError(writer, httpRequest, form.Message, capitalize(err.Error())+".")
 		return
@@ -152,41 +126,6 @@ func (assistantHandler *AssistantHandler) respondError(writer http.ResponseWrite
 		Failed:        true,
 		CreatedAt:     time.Now(),
 	})
-}
-
-// readAttachments lê os arquivos enviados e confere tamanho e tipo real (pelo conteúdo,
-// não pela extensão ou pelo tipo informado pelo navegador).
-func readAttachments(httpRequest *http.Request) ([]assistant.AttachmentUpload, error) {
-	if httpRequest.MultipartForm == nil {
-		return nil, nil
-	}
-	files := httpRequest.MultipartForm.File["attachments"]
-	if len(files) > 3 {
-		return nil, errors.New("Envie no máximo 3 arquivos por mensagem.")
-	}
-
-	uploads := make([]assistant.AttachmentUpload, 0, len(files))
-	for _, fileHeader := range files {
-		if fileHeader.Size > maxAttachmentSize {
-			return nil, fmt.Errorf("O arquivo “%s” passa de 5 MB.", fileHeader.Filename)
-		}
-		file, err := fileHeader.Open()
-		if err != nil {
-			return nil, fmt.Errorf("Não foi possível ler o arquivo “%s”.", fileHeader.Filename)
-		}
-		data, err := io.ReadAll(file)
-		file.Close()
-		if err != nil {
-			return nil, fmt.Errorf("Não foi possível ler o arquivo “%s”.", fileHeader.Filename)
-		}
-
-		mediaType := http.DetectContentType(data)
-		if !allowedAttachmentTypes[mediaType] {
-			return nil, fmt.Errorf("O arquivo “%s” não é uma imagem (JPG, PNG, WEBP, GIF) nem PDF.", fileHeader.Filename)
-		}
-		uploads = append(uploads, assistant.AttachmentUpload{FileName: fileHeader.Filename, MediaType: mediaType, Data: data})
-	}
-	return uploads, nil
 }
 
 func capitalize(text string) string {
