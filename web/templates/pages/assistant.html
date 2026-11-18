@@ -1,0 +1,88 @@
+{{template "layout/start" (dict "Title" "Assistente IA" "Active" "assistant")}}
+
+{{template "components/page_header" (dict
+    "Eyebrow" "Inteligência"
+    "Title" "Assistente IA"
+    "Subtitle" "Peça em linguagem natural: cadastrar itens, dar entrada ou baixa, ou enviar a foto de uma nota fiscal."
+)}}
+
+<section class="panel chat-panel">
+    <header class="chat-header">
+        {{/* Quem trabalha em cada pedido: o orquestrador entende e delega aos agentes. */}}
+        <div class="chat-agents" aria-label="Agentes">
+            <span class="agent-chip is-orchestrator">{{template "components/icon" "sparkles"}}Orquestrador</span>
+            <span class="agent-arrow" aria-hidden="true">→</span>
+            <span class="agent-chip">{{template "components/icon" "box"}}Cadastro</span>
+            <span class="agent-chip">{{template "components/icon" "arrows"}}Estoque</span>
+            <span class="agent-chip">{{template "components/icon" "file"}}Nota fiscal</span>
+        </div>
+        <div class="chat-header-actions">
+            <span class="chat-model" title="Modelo de IA">{{.ModelName}}</span>
+            <form method="post" action="/assistant/reset">
+                <button type="submit" class="btn btn-light btn-sm">{{template "components/icon" "refresh"}} Nova conversa</button>
+            </form>
+        </div>
+    </header>
+
+    <div class="chat-log" id="chat-log" aria-live="polite">
+        {{if .Turns}}
+            {{range .Turns}}{{template "components/chat_turn" .}}{{end}}
+        {{else}}
+        <div class="chat-welcome" id="chat-welcome">
+            <span class="chat-welcome-icon">{{template "components/icon" "sparkles"}}</span>
+            <h2 class="chat-welcome-title">Como posso ajudar no estoque?</h2>
+            <p class="chat-welcome-text">
+                Anexe a foto ou o PDF de uma nota fiscal para dar entrada nos itens comprados,
+                ou experimente um destes pedidos:
+            </p>
+            <div class="chat-suggestions">
+                {{range .Suggestions}}
+                <button type="button" class="chat-suggestion" data-chat-suggestion="{{.}}">{{.}}</button>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+    </div>
+
+    {{/* Aparece enquanto o HTMX espera a resposta (classe htmx-request). */}}
+    <div class="chat-typing" id="chat-typing" aria-live="polite">
+        <span class="chat-avatar">{{template "components/icon" "sparkles"}}</span>
+        <span class="chat-typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>Os agentes estão trabalhando… notas fiscais podem levar até um minuto.</span>
+    </div>
+
+    {{if .Enabled}}
+    <form class="chat-composer" id="chat-form" method="post" action="/assistant/messages" enctype="multipart/form-data"
+          hx-post="/assistant/messages" hx-encoding="multipart/form-data"
+          hx-target="#chat-log" hx-swap="beforeend" hx-indicator="#chat-typing"
+          hx-disabled-elt="find button, find textarea">
+        <div class="chat-selected-files" id="chat-selected-files" hidden></div>
+        <div class="chat-composer-row">
+            <label class="chat-attach" title="Anexar nota fiscal (imagem ou PDF)">
+                {{template "components/icon" "paperclip"}}
+                <span class="visually-hidden">Anexar arquivo</span>
+                <input type="file" name="attachments" id="chat-attachments" multiple
+                       accept="image/jpeg,image/png,image/webp,image/gif,application/pdf">
+            </label>
+            <label class="visually-hidden" for="chat-message">Mensagem</label>
+            <textarea class="chat-input" id="chat-message" name="message" rows="1" maxlength="4000"
+                      placeholder="Escreva um pedido… (Enter envia, Shift+Enter quebra a linha)"></textarea>
+            <button type="submit" class="btn btn-primary chat-send" title="Enviar">
+                {{template "components/icon" "send"}}<span class="visually-hidden">Enviar</span>
+            </button>
+        </div>
+        <p class="chat-disclaimer">A IA pode errar. Confira as alterações listadas em cada resposta.</p>
+    </form>
+    {{else}}
+    <div class="chat-setup">
+        {{template "components/icon" "alert"}}
+        <div>
+            <strong>O assistente ainda não está configurado.</strong>
+            <p>Adicione sua chave da API da Anthropic no arquivo <code>.env</code> e reinicie o servidor:</p>
+            <pre>ANTHROPIC_API_KEY=sk-ant-...</pre>
+        </div>
+    </div>
+    {{end}}
+</section>
+
+{{template "layout/end"}}

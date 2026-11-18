@@ -36,6 +36,11 @@ func New(app *app.App) http.Handler {
 	mux.HandleFunc("GET /movements/new", app.StockMovementHandler.New)
 	mux.HandleFunc("POST /movements", app.StockMovementHandler.Register)
 
+	// Assistente de IA (chat com orquestrador + agentes)
+	mux.HandleFunc("GET /assistant", app.AssistantHandler.Show)
+	mux.HandleFunc("POST /assistant/messages", app.AssistantHandler.Send)
+	mux.HandleFunc("POST /assistant/reset", app.AssistantHandler.Reset)
+
 	// Proteção contra CSRF: recusa POST vindo de outro site (usa os cabeçalhos
 	// Sec-Fetch-Site/Origin que o navegador envia). Equivale ao @csrf do Laravel.
 	return http.NewCrossOriginProtection().Handler(mux)

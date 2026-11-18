@@ -1,0 +1,43 @@
+{{/* Componentes do chat do assistente de IA. */}}
+
+{{/*
+    Uma troca do chat: a mensagem do usuário e a resposta do assistente, com as ações feitas.
+    Recebe um assistant.Turn. É também o trecho que o POST /assistant/messages devolve ao HTMX.
+*/}}
+{{define "components/chat_turn"}}
+<div class="chat-turn">
+    {{if or .UserText .AttachmentNames}}
+    <div class="chat-row is-user">
+        <div class="chat-bubble is-user">
+            {{with .UserText}}<p class="chat-text">{{.}}</p>{{end}}
+            {{if .AttachmentNames}}
+            <div class="chat-files">
+                {{range .AttachmentNames}}<span class="chat-file">{{template "components/icon" "file"}}{{.}}</span>{{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+
+    <div class="chat-row is-assistant">
+        <span class="chat-avatar{{if .Failed}} is-error{{end}}">{{template "components/icon" "sparkles"}}</span>
+        <div class="chat-bubble is-assistant{{if .Failed}} is-error{{end}}">
+            <p class="chat-text">{{.AssistantText}}</p>
+            {{if .Actions}}
+            <ul class="chat-actions" aria-label="Alterações feitas">
+                {{range .Actions}}
+                <li>
+                    <a class="chat-action is-{{.Kind}}" href="{{.Link}}">
+                        {{if eq .Kind "stock_out"}}{{template "components/icon" "exit"}}
+                        {{else if eq .Kind "stock_in"}}{{template "components/icon" "entry"}}
+                        {{else}}{{template "components/icon" "check"}}{{end}}
+                        {{.Description}}
+                    </a>
+                </li>
+                {{end}}
+            </ul>
+            {{end}}
+        </div>
+    </div>
+</div>
+{{end}}

@@ -24,7 +24,15 @@ func main() {
 		log.Fatalf("erro ao rodar migrations: %v", err)
 	}
 
-	app := app.NewApp(db)
+	app, err := app.NewApp(db, cfg)
+	if err != nil {
+		log.Fatalf("erro na configuração: %v", err)
+	}
+	if cfg.AnthropicAPIKey == "" {
+		log.Printf("assistente de IA desativado: defina ANTHROPIC_API_KEY no .env")
+	} else {
+		log.Printf("assistente de IA ativo: modelo %s, esforço %s", cfg.ClaudeModel, cfg.ClaudeEffort)
+	}
 
 	routes := router.New(app)
 

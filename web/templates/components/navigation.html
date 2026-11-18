@@ -35,6 +35,9 @@
             <span class="sidebar-section">Operação</span>
             {{template "components/nav_item" (dict "Label" "Movimentações" "URL" "/movements" "Icon" "arrows" "Active" (eq . "movements"))}}
             {{template "components/nav_item" (dict "Label" "Relatórios" "Icon" "chart" "Soon" true)}}
+
+            <span class="sidebar-section">Inteligência</span>
+            {{template "components/nav_item" (dict "Label" "Assistente IA" "URL" "/assistant" "Icon" "sparkles" "Active" (eq . "assistant"))}}
         </nav>
 
         <div class="sidebar-footer">v0.1 · feito em Go</div>
