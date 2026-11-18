@@ -12,11 +12,14 @@
     <div class="hero-art" aria-hidden="true">{{template "components/icon" "package"}}</div>
 </section>
 
+<h2 class="section-title">Resumo do estoque</h2>
+{{template "components/stock_summary" .Summary}}
+
 <h2 class="section-title">Módulos</h2>
 <div class="module-grid">
     {{template "components/module_card" (dict "Icon" "tag" "Title" "Categorias" "URL" "/categories" "Description" "Agrupe os itens do estoque por tipo.")}}
     {{template "components/module_card" (dict "Icon" "box" "Title" "Itens" "URL" "/items" "Description" "Produtos com categoria e quantidade em estoque.")}}
-    {{template "components/module_card" (dict "Icon" "arrows" "Title" "Movimentações" "Soon" true "Description" "Entradas e saídas com histórico.")}}
+    {{template "components/module_card" (dict "Icon" "arrows" "Title" "Movimentações" "URL" "/movements" "Description" "Entradas e baixas de estoque, com histórico.")}}
     {{template "components/module_card" (dict "Icon" "chart" "Title" "Relatórios" "Soon" true "Description" "Visão geral do estoque e alertas de reposição.")}}
 </div>
 

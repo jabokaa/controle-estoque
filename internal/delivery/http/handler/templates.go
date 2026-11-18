@@ -8,6 +8,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 // templates guarda todas as views de web/templates, lidas uma vez ao iniciar:
@@ -17,7 +19,7 @@ import (
 var templates = loadTemplates()
 
 func loadTemplates() *template.Template {
-	root := template.New("").Funcs(template.FuncMap{"dict": dict})
+	root := template.New("").Funcs(template.FuncMap{"dict": dict, "number": formatNumber})
 	for _, pattern := range []string{
 		"web/templates/layouts/*.html",
 		"web/templates/components/*.html",
@@ -64,4 +66,32 @@ func render(writer http.ResponseWriter, status int, page string, data any) {
 func serverError(writer http.ResponseWriter, action string, err error) {
 	log.Printf("erro ao %s: %v", action, err)
 	http.Error(writer, "Ocorreu um erro inesperado. Tente novamente.", http.StatusInternalServerError)
+}
+
+// formatNumber formata um número inteiro no padrão brasileiro: 12345 → "12.345".
+// Uso no template: {{number .Summary.TotalUnits}}
+func formatNumber(value any) string {
+	var number int64
+	switch typed := value.(type) {
+	case int:
+		number = int64(typed)
+	case int64:
+		number = typed
+	default:
+		return fmt.Sprint(value)
+	}
+
+	digits := strconv.FormatInt(number, 10)
+	sign := ""
+	if strings.HasPrefix(digits, "-") {
+		sign, digits = "-", digits[1:]
+	}
+	var formatted strings.Builder
+	for index, digit := range digits {
+		if index > 0 && (len(digits)-index)%3 == 0 {
+			formatted.WriteByte('.')
+		}
+		formatted.WriteRune(digit)
+	}
+	return sign + formatted.String()
 }

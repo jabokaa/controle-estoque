@@ -14,6 +14,8 @@
 
 {{template "components/flash" .Flash}}
 
+{{template "components/stock_summary" .Summary}}
+
 <section class="panel">
     {{/*
         Filtros. Com o HTMX, digitar na busca, trocar a categoria ou a quantidade por página recarrega
@@ -100,6 +102,10 @@
                         </td>
                         <td class="cell-date">{{.CreatedAt.Format "02/01/2006"}}<small>{{.CreatedAt.Format "15:04"}}</small></td>
                         <td class="cell-actions">
+                            <a class="icon-button is-success" href="/movements/new?item_id={{.ID}}&type=in" hx-boost="false"
+                               title="Dar entrada" aria-label="Dar entrada em {{.Name}}">{{template "components/icon" "entry"}}</a>
+                            <a class="icon-button is-warning" href="/movements/new?item_id={{.ID}}&type=out" hx-boost="false"
+                               title="Dar baixa" aria-label="Dar baixa em {{.Name}}">{{template "components/icon" "exit"}}</a>
                             <a class="icon-button" href="/items/{{.ID}}/edit" hx-boost="false"
                                title="Editar" aria-label="Editar {{.Name}}">{{template "components/icon" "pencil"}}</a>
                             <button type="button" class="icon-button is-danger" title="Excluir" aria-label="Excluir {{.Name}}"

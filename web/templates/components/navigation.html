@@ -33,7 +33,7 @@
             {{template "components/nav_item" (dict "Label" "Itens" "URL" "/items" "Icon" "box" "Active" (eq . "items"))}}
 
             <span class="sidebar-section">Operação</span>
-            {{template "components/nav_item" (dict "Label" "Movimentações" "Icon" "arrows" "Soon" true)}}
+            {{template "components/nav_item" (dict "Label" "Movimentações" "URL" "/movements" "Icon" "arrows" "Active" (eq . "movements"))}}
             {{template "components/nav_item" (dict "Label" "Relatórios" "Icon" "chart" "Soon" true)}}
         </nav>
 

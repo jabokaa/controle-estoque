@@ -25,10 +25,23 @@ type ItemListQuery struct {
 	Page          PageRequest
 }
 
+// StockSummary é o resumo do estoque (os números dos cartões de resumo).
+type StockSummary struct {
+	TotalUnits      int64 // soma das quantidades de todos os itens
+	ItemCount       int64 // quantos itens estão cadastrados
+	OutOfStockCount int64 // quantos itens estão com estoque zero
+}
+
 // ItemRepository é o contrato de acesso aos itens.
 // As consultas devolvem os itens com a Category preenchida.
 type ItemRepository interface {
 	List(ctx context.Context, query ItemListQuery) (Page[entity.Item], error)
+
+	// ListAll devolve todos os itens, por nome (ex.: para um campo de seleção).
+	ListAll(ctx context.Context) ([]entity.Item, error)
+
+	// Summary devolve o resumo do estoque.
+	Summary(ctx context.Context) (StockSummary, error)
 
 	// FindByID devolve ErrNotFound se o item não existir.
 	FindByID(ctx context.Context, id int64) (entity.Item, error)
@@ -43,7 +56,8 @@ type ItemRepository interface {
 	// Create grava o item e preenche ID, CreatedAt e UpdatedAt.
 	Create(ctx context.Context, item *entity.Item) error
 
-	// Update grava as alterações e atualiza UpdatedAt. Devolve ErrNotFound se o item não existir.
+	// Update grava os dados cadastrais (não a quantidade, que muda por movimentação)
+	// e atualiza UpdatedAt. Devolve ErrNotFound se o item não existir.
 	Update(ctx context.Context, item *entity.Item) error
 
 	// Delete devolve ErrNotFound se o item não existir.

@@ -51,18 +51,40 @@
                     "Required" true
                 )}}
 
+                {{/* A quantidade só muda por movimentação: no cadastro, a inicial vira uma entrada. */}}
+                {{if not .IsEdit}}
                 {{template "components/form_input" (dict
-                    "ID" "item-quantity"
-                    "Name" "quantity"
-                    "Label" "Quantidade em estoque"
+                    "ID" "item-initial-quantity"
+                    "Name" "initial_quantity"
+                    "Label" "Quantidade inicial"
                     "Type" "number"
                     "Min" "0"
                     "Max" "1000000"
-                    "Value" .Form.Quantity
-                    "Error" (.Errors.Get "quantity")
-                    "Required" true
+                    "Value" .Form.InitialQuantity
+                    "Error" (.Errors.Get "initial_quantity")
+                    "Hint" "Lançada como entrada “Estoque inicial”."
                 )}}
+                {{end}}
             </div>
+
+            {{if .IsEdit}}
+            <div class="stock-box">
+                <div>
+                    <p class="stock-box-label">Estoque atual</p>
+                    <p class="stock-box-value">{{number .Item.Quantity}} <small>un.</small></p>
+                    <p class="form-field-hint">A quantidade muda só por movimentação, para bater com o histórico.</p>
+                </div>
+                <div class="stock-box-actions">
+                    <a class="btn btn-sm btn-success-soft" href="/movements/new?item_id={{.Item.ID}}&type=in">
+                        {{template "components/icon" "entry"}} Entrada
+                    </a>
+                    <a class="btn btn-sm btn-danger-soft" href="/movements/new?item_id={{.Item.ID}}&type=out">
+                        {{template "components/icon" "exit"}} Baixa
+                    </a>
+                    <a class="btn btn-sm btn-light" href="/movements?item_id={{.Item.ID}}">Histórico</a>
+                </div>
+            </div>
+            {{end}}
 
             {{template "components/form_textarea" (dict
                 "ID" "item-description"

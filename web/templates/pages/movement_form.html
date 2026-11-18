@@ -1,0 +1,90 @@
+{{/* Formulário de entrada / baixa de estoque. */}}
+
+{{template "layout/start" (dict "Title" "Nova movimentação" "Active" "movements")}}
+
+<a class="back-link" href="/movements">{{template "components/icon" "arrow-left"}} Voltar para movimentações</a>
+
+{{template "components/page_header" (dict
+    "Eyebrow" "Operação"
+    "Title" "Nova movimentação"
+    "Subtitle" "Dê entrada (compra, devolução) ou baixa (venda, uso, perda) no estoque de um item."
+)}}
+
+<section class="panel form-panel">
+    <form method="post" action="/movements" novalidate>
+        <div class="form-panel-body">
+            {{with .Errors.Get "_form"}}<div class="validation-alert" role="alert">{{template "components/icon" "alert"}}<span>{{.}}</span></div>{{end}}
+
+            {{if not .ItemOptions}}
+            <div class="validation-alert" role="alert">
+                {{template "components/icon" "alert"}}
+                <span>Nenhum item cadastrado. <a href="/items/new">Cadastre um item</a> antes de movimentar o estoque.</span>
+            </div>
+            {{end}}
+
+            {{/* Tipo: entrada ou saída, em botões grandes (radio estilizado) */}}
+            <fieldset class="form-field">
+                <legend class="form-field-label">Tipo <span class="required-mark" aria-hidden="true">*</span></legend>
+                <div class="segmented{{if .Errors.Has "type"}} is-invalid{{end}}">
+                    <label class="segmented-option is-in">
+                        <input type="radio" name="type" value="in"{{if eq .Form.Type "in"}} checked{{end}}>
+                        {{template "components/icon" "entry"}}
+                        <span><strong>Entrada</strong><small>soma ao estoque</small></span>
+                    </label>
+                    <label class="segmented-option is-out">
+                        <input type="radio" name="type" value="out"{{if eq .Form.Type "out"}} checked{{end}}>
+                        {{template "components/icon" "exit"}}
+                        <span><strong>Baixa</strong><small>subtrai do estoque</small></span>
+                    </label>
+                </div>
+                {{with .Errors.Get "type"}}<div class="invalid-feedback d-block">{{.}}</div>{{end}}
+            </fieldset>
+
+            <div class="form-row">
+                {{template "components/form_select" (dict
+                    "ID" "movement-item"
+                    "Name" "item_id"
+                    "Label" "Item"
+                    "Options" .ItemOptions
+                    "Placeholder" "Selecione…"
+                    "Error" (.Errors.Get "item_id")
+                    "Required" true
+                )}}
+
+                {{template "components/form_input" (dict
+                    "ID" "movement-quantity"
+                    "Name" "quantity"
+                    "Label" "Quantidade"
+                    "Type" "number"
+                    "Min" "1"
+                    "Max" "1000000"
+                    "Value" (or .Form.Quantity "")
+                    "Error" (.Errors.Get "quantity")
+                    "Required" true
+                    "Autofocus" (gt .Form.ItemID 0)
+                )}}
+            </div>
+
+            {{template "components/form_input" (dict
+                "ID" "movement-note"
+                "Name" "note"
+                "Label" "Observação"
+                "Value" .Form.Note
+                "Error" (.Errors.Get "note")
+                "Hint" "Opcional. Ex.: Compra NF 1234, venda balcão, ajuste de inventário."
+                "Maxlength" 255
+            )}}
+        </div>
+
+        <div class="form-panel-footer">
+            <div class="form-panel-actions">
+                <a class="btn btn-light" href="/movements">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    {{template "components/icon" "check"}} Registrar movimentação
+                </button>
+            </div>
+        </div>
+    </form>
+</section>
+
+{{template "layout/end"}}

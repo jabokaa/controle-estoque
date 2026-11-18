@@ -14,12 +14,17 @@ var (
 	ErrItemCategoryNotFound = errors.New("a categoria escolhida não existe")
 )
 
+// initialStockNote é a observação da entrada lançada automaticamente no cadastro do item.
+const initialStockNote = "Estoque inicial"
+
 // ItemInput são os dados que o usuário informa ao cadastrar ou editar um item.
 type ItemInput struct {
 	CategoryID  int64
 	Name        string
 	Description string
-	Quantity    int
+	// InitialQuantity só vale no cadastro: vira uma movimentação de entrada.
+	// Na edição é ignorada (a quantidade muda por movimentação).
+	InitialQuantity int
 }
 
 func (input ItemInput) toItemData() entity.ItemData {
@@ -27,7 +32,6 @@ func (input ItemInput) toItemData() entity.ItemData {
 		CategoryID:  input.CategoryID,
 		Name:        input.Name,
 		Description: input.Description,
-		Quantity:    input.Quantity,
 	}
 }
 
@@ -53,17 +57,21 @@ func findItemCategory(ctx context.Context, categoryRepo repository.CategoryRepos
 	return category, err
 }
 
-// CreateItem cadastra um item novo.
+// CreateItem cadastra um item novo e lança o estoque inicial como movimentação de entrada.
 type CreateItem struct {
 	repo         repository.ItemRepository
 	categoryRepo repository.CategoryRepository
+	movementRepo repository.StockMovementRepository
 }
 
-func NewCreateItem(repo repository.ItemRepository, categoryRepo repository.CategoryRepository) *CreateItem {
-	return &CreateItem{repo: repo, categoryRepo: categoryRepo}
+func NewCreateItem(repo repository.ItemRepository, categoryRepo repository.CategoryRepository, movementRepo repository.StockMovementRepository) *CreateItem {
+	return &CreateItem{repo: repo, categoryRepo: categoryRepo, movementRepo: movementRepo}
 }
 
 func (createItem *CreateItem) Execute(ctx context.Context, input ItemInput) (entity.Item, error) {
+	if input.InitialQuantity < 0 {
+		return entity.Item{}, entity.ErrItemQuantityNegative
+	}
 	item, err := entity.NewItem(input.toItemData())
 	if err != nil {
 		return item, err
@@ -79,10 +87,21 @@ func (createItem *CreateItem) Execute(ctx context.Context, input ItemInput) (ent
 		return item, err
 	}
 	item.Category = category
+
+	// Estoque inicial: entra como movimentação, para o saldo bater com o histórico.
+	if input.InitialQuantity > 0 {
+		movement, err := createItem.movementRepo.Register(ctx, item.ID, func(stored *entity.Item) (entity.StockMovement, error) {
+			return entity.NewStockMovement(stored, entity.MovementIn, input.InitialQuantity, initialStockNote)
+		})
+		if err != nil {
+			return item, err
+		}
+		item.Quantity = movement.BalanceAfter
+	}
 	return item, nil
 }
 
-// UpdateItem altera um item existente.
+// UpdateItem altera os dados cadastrais de um item existente.
 type UpdateItem struct {
 	repo         repository.ItemRepository
 	categoryRepo repository.CategoryRepository

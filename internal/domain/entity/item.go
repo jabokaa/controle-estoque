@@ -19,27 +19,29 @@ type Item struct {
 	Category    Category // preenchida nas consultas (nome da categoria para exibir)
 	Name        string
 	Description string
-	Quantity    int // quantidade em estoque
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	// Quantity é a quantidade em estoque. Só muda por movimentação (NewStockMovement),
+	// para o saldo sempre bater com o histórico de entradas e saídas.
+	Quantity  int
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
-// ItemData são os dados que podem ser informados ao criar ou alterar um item.
+// ItemData são os dados cadastrais de um item (a quantidade não entra aqui: ela muda por movimentação).
 type ItemData struct {
 	CategoryID  int64
 	Name        string
 	Description string
-	Quantity    int
 }
 
-// NewItem cria um item novo, já aplicando as regras de negócio.
+// NewItem cria um item novo, com estoque zero, já aplicando as regras de negócio.
+// O estoque inicial é lançado depois, como uma movimentação de entrada.
 func NewItem(data ItemData) (Item, error) {
 	var item Item
 	err := item.Change(data)
 	return item, err
 }
 
-// Change altera os dados do item, aplicando as regras de negócio.
+// Change altera os dados cadastrais do item, aplicando as regras de negócio.
 // Vale para qualquer origem (tela, API, importação), por isso fica na entidade.
 func (item *Item) Change(data ItemData) error {
 	name := strings.TrimSpace(data.Name)
@@ -49,9 +51,6 @@ func (item *Item) Change(data ItemData) error {
 	if data.CategoryID <= 0 {
 		return ErrItemCategoryRequired
 	}
-	if data.Quantity < 0 {
-		return ErrItemQuantityNegative
-	}
 
 	if item.CategoryID != data.CategoryID {
 		item.Category = Category{} // trocou de categoria: a carregada não vale mais
@@ -59,7 +58,6 @@ func (item *Item) Change(data ItemData) error {
 	item.CategoryID = data.CategoryID
 	item.Name = name
 	item.Description = strings.TrimSpace(data.Description)
-	item.Quantity = data.Quantity
 	return nil
 }
 

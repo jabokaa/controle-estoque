@@ -22,6 +22,7 @@ type ItemUseCases struct {
 	Update     *usecase.UpdateItem
 	Delete     *usecase.DeleteItem
 	Categories *usecase.ListAllCategories // opções do campo "Categoria" e do filtro
+	Summary    *usecase.GetStockSummary   // cartões de resumo do estoque
 }
 
 type ItemHandler struct {
@@ -51,6 +52,7 @@ type itemListView struct {
 	Pagination      paginationView
 	PerPageOptions  []int
 	CategoryOptions []selectOption
+	Summary         repository.StockSummary
 	Flash           *flashMessage
 }
 
@@ -74,8 +76,15 @@ func (itemHandler *ItemHandler) List(writer http.ResponseWriter, httpRequest *ht
 		return
 	}
 
+	summary, err := itemHandler.useCases.Summary.Execute(httpRequest.Context())
+	if err != nil {
+		serverError(writer, "resumir estoque", err)
+		return
+	}
+
 	// 3. Monta a tela.
 	view := itemListView{
+		Summary:         summary,
 		Items:           page.Items,
 		Filter:          filter,
 		Errors:          validationErrors,
@@ -222,6 +231,9 @@ func (itemHandler *ItemHandler) Delete(writer http.ResponseWriter, httpRequest *
 	switch {
 	case errors.Is(err, repository.ErrNotFound):
 		setFlash(writer, "danger", "Esse item não existe mais.")
+	case errors.Is(err, usecase.ErrItemHasMovements):
+		setFlash(writer, "danger", fmt.Sprintf(
+			"O item “%s” não pode ser excluído porque tem movimentações de estoque (o histórico seria perdido).", item.Name))
 	case err != nil:
 		serverError(writer, "excluir item", err)
 		return
@@ -293,7 +305,7 @@ func itemFieldErrors(err error) request.ValidationErrors {
 	case errors.Is(err, usecase.ErrItemCategoryNotFound):
 		return request.ValidationErrors{"category_id": "A categoria escolhida não existe mais. Escolha outra."}
 	case errors.Is(err, entity.ErrItemQuantityNegative):
-		return request.ValidationErrors{"quantity": "Quantidade não pode ser negativa."}
+		return request.ValidationErrors{"initial_quantity": "Quantidade inicial não pode ser negativa."}
 	}
 	return nil
 }

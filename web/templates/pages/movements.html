@@ -1,0 +1,126 @@
+{{template "layout/start" (dict "Title" "Movimentações" "Active" "movements")}}
+
+{{/* Com um item filtrado, a "Nova movimentação" já abre com ele escolhido. */}}
+{{$newMovementURL := "/movements/new"}}
+{{if .Filter.ItemID}}{{$newMovementURL = printf "/movements/new?item_id=%d" .Filter.ItemID}}{{end}}
+
+{{template "components/page_header" (dict
+    "Eyebrow" "Operação"
+    "Title" "Movimentações"
+    "Subtitle" "Entradas e baixas de estoque, da mais recente para a mais antiga."
+    "ActionLabel" "Nova movimentação"
+    "ActionURL" $newMovementURL
+)}}
+
+{{template "components/flash" .Flash}}
+
+{{template "components/stock_summary" .Summary}}
+
+<section class="panel">
+    {{/*
+        Filtros. Com o HTMX, trocar o item, o tipo ou a quantidade por página recarrega só a
+        tabela (#movements-results). Sem JavaScript, o formulário funciona como um GET comum.
+    */}}
+    <form class="panel-toolbar" id="movements-filter" method="get" action="/movements"
+          hx-get="/movements" hx-target="#movements-results" hx-select="#movements-results"
+          hx-swap="outerHTML" hx-push-url="true" hx-sync="this:replace" hx-indicator="#movements-results">
+        <div class="panel-toolbar-filters">
+            {{template "components/filter_select" (dict
+                "ID" "movement-item-filter"
+                "Name" "item_id"
+                "Label" "Filtrar por item"
+                "Options" .ItemOptions
+                "AllLabel" "Todos os itens"
+                "HtmxURL" "/movements"
+            )}}
+
+            <div class="filter-select">
+                <label class="visually-hidden" for="movement-type-filter">Filtrar por tipo</label>
+                <select class="form-select" id="movement-type-filter" name="type"
+                        hx-get="/movements" hx-trigger="change" hx-include="closest form">
+                    <option value="">Entradas e baixas</option>
+                    <option value="in"{{if eq .Filter.Type "in"}} selected{{end}}>Só entradas</option>
+                    <option value="out"{{if eq .Filter.Type "out"}} selected{{end}}>Só baixas</option>
+                </select>
+            </div>
+        </div>
+
+        <label class="per-page-field">
+            <span>Por página</span>
+            <select class="form-select form-select-sm" name="per_page"
+                    hx-get="/movements" hx-trigger="change" hx-include="closest form">
+                {{range .PerPageOptions}}
+                <option value="{{.}}"{{if eq . $.Filter.PerPage}} selected{{end}}>{{.}}</option>
+                {{end}}
+            </select>
+        </label>
+
+        <noscript><button class="btn btn-primary btn-sm" type="submit">Filtrar</button></noscript>
+    </form>
+
+    <div id="movements-results" class="panel-results"
+         hx-boost="true" hx-target="#movements-results" hx-select="#movements-results" hx-swap="outerHTML">
+
+        {{template "components/validation_alert" .Errors}}
+
+        {{if .Movements}}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Data</th>
+                        <th scope="col">Item</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Quantidade</th>
+                        <th scope="col">Saldo após</th>
+                        <th scope="col">Observação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Movements}}
+                    <tr>
+                        <td class="cell-date">{{.CreatedAt.Format "02/01/2006"}}<small>{{.CreatedAt.Format "15:04"}}</small></td>
+                        <td>
+                            {{/* hx-boost="false": recarrega a página inteira, para o filtro de item acompanhar */}}
+                            <a class="entity-link" href="/movements?item_id={{.ItemID}}" hx-boost="false"
+                               title="Ver só as movimentações de {{.Item.Name}}">{{.Item.Name}}</a>
+                        </td>
+                        <td>
+                            {{if .IsEntry}}
+                            <span class="movement-badge is-in">{{template "components/icon" "entry"}}Entrada</span>
+                            {{else}}
+                            <span class="movement-badge is-out">{{template "components/icon" "exit"}}Baixa</span>
+                            {{end}}
+                        </td>
+                        <td>
+                            <span class="movement-quantity {{if .IsEntry}}is-in{{else}}is-out{{end}}">
+                                {{if .IsEntry}}+{{else}}−{{end}}{{number .Quantity}}
+                            </span>
+                        </td>
+                        <td class="quantity-value">{{number .BalanceAfter}}</td>
+                        <td>{{if .Note}}{{.Note}}{{else}}<span class="text-soft">—</span>{{end}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        {{template "components/pagination" .Pagination}}
+
+        {{else if or .Filter.ItemID .Filter.Type}}
+        {{template "components/empty_state" (dict
+            "Icon" "search"
+            "Title" "Nenhuma movimentação encontrada"
+            "Message" "Nenhuma movimentação corresponde aos filtros. Tente outro item ou tipo."
+        )}}
+        {{else}}
+        {{template "components/empty_state" (dict
+            "Icon" "arrows"
+            "Title" "Nenhuma movimentação ainda"
+            "Message" "As entradas e baixas de estoque vão aparecer aqui."
+        )}}
+        {{end}}
+    </div>
+</section>
+
+{{template "layout/end"}}

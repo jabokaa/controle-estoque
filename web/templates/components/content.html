@@ -53,3 +53,49 @@
 </a>
 {{end}}
 {{end}}
+
+{{/*
+    Cartão com um número de destaque.
+    Parâmetros: Label, Value (texto já formatado), Icon, Hint (opcional),
+                Tone ("brand" se não informado; "success", "danger", "neutral").
+*/}}
+{{define "components/stat_card"}}
+<div class="stat-card stat-{{or .Tone "brand"}}">
+    <span class="stat-icon">{{template "components/icon" .Icon}}</span>
+    <div>
+        <p class="stat-label">{{.Label}}</p>
+        <p class="stat-value">{{.Value}}</p>
+        {{with .Hint}}<p class="stat-hint">{{.}}</p>{{end}}
+    </div>
+</div>
+{{end}}
+
+{{/*
+    Resumo do estoque em três cartões. Recebe um repository.StockSummary.
+    Usado no início, na lista de itens e no histórico de movimentações.
+*/}}
+{{define "components/stock_summary"}}
+{{$outOfStockTone := "neutral"}}
+{{if .OutOfStockCount}}{{$outOfStockTone = "danger"}}{{end}}
+<div class="stat-grid">
+    {{template "components/stat_card" (dict
+        "Label" "Total em estoque"
+        "Value" (printf "%s un." (number .TotalUnits))
+        "Hint" "soma das quantidades de todos os itens"
+        "Icon" "layers"
+    )}}
+    {{template "components/stat_card" (dict
+        "Label" "Itens cadastrados"
+        "Value" (number .ItemCount)
+        "Icon" "box"
+        "Tone" "success"
+    )}}
+    {{template "components/stat_card" (dict
+        "Label" "Itens sem estoque"
+        "Value" (number .OutOfStockCount)
+        "Hint" "precisam de reposição"
+        "Icon" "alert"
+        "Tone" $outOfStockTone
+    )}}
+</div>
+{{end}}

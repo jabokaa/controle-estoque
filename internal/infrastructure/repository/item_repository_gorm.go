@@ -181,7 +181,8 @@ func (itemRepository *ItemRepositoryGorm) Create(ctx context.Context, item *enti
 	return nil
 }
 
-// Update: UPDATE items SET category_id = ?, name = ?, description = ?, quantity = ?, updated_at = ? WHERE id = ?
+// Update: UPDATE items SET category_id = ?, name = ?, description = ?, updated_at = ? WHERE id = ?
+// A quantidade não entra: ela só muda por movimentação (StockMovementRepositoryGorm.Register).
 func (itemRepository *ItemRepositoryGorm) Update(ctx context.Context, item *entity.Item) error {
 	model := newItemModel(*item)
 	model.UpdatedAt = time.Now().UTC()
@@ -189,7 +190,7 @@ func (itemRepository *ItemRepositoryGorm) Update(ctx context.Context, item *enti
 	result := itemRepository.db.WithContext(ctx).
 		Model(&itemModel{ID: item.ID}).
 		Omit(clause.Associations).
-		Select("category_id", "name", "description", "quantity", "updated_at"). // grava inclusive description NULL
+		Select("category_id", "name", "description", "updated_at"). // grava inclusive description NULL
 		Updates(&model)
 	if result.Error != nil {
 		return result.Error
@@ -211,4 +212,25 @@ func (itemRepository *ItemRepositoryGorm) Delete(ctx context.Context, id int64) 
 		return repository.ErrNotFound
 	}
 	return nil
+}
+
+// ListAll: SELECT items.*, Category.* FROM items LEFT JOIN categories Category ... ORDER BY items.name
+func (itemRepository *ItemRepositoryGorm) ListAll(ctx context.Context) ([]entity.Item, error) {
+	var models []itemModel
+	if err := itemRepository.db.WithContext(ctx).Joins("Category").Order("items.name").Find(&models).Error; err != nil {
+		return nil, err
+	}
+	return toEntities(models, itemModel.toEntity), nil
+}
+
+// Summary: SELECT SUM(quantity), COUNT(*), SUM(CASE WHEN quantity = 0 ...) FROM items
+func (itemRepository *ItemRepositoryGorm) Summary(ctx context.Context) (repository.StockSummary, error) {
+	var summary repository.StockSummary
+	err := itemRepository.db.WithContext(ctx).
+		Model(&itemModel{}).
+		Select(`COALESCE(SUM(quantity), 0) AS total_units,
+		        COUNT(*) AS item_count,
+		        COALESCE(SUM(CASE WHEN quantity = 0 THEN 1 ELSE 0 END), 0) AS out_of_stock_count`).
+		Scan(&summary).Error
+	return summary, err
 }
