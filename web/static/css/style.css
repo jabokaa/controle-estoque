@@ -2,3 +2,18 @@ body {
     font-family: sans-serif;
     margin: 2rem;
 }
+
+nav {
+    margin-bottom: 1.5rem;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border-bottom: 1px solid #ddd;
+    padding: 0.5rem;
+    text-align: left;
+}

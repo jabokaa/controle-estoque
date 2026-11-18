@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorias · Controle de Estoque</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav><a href="/">Início</a></nav>
+
+    <h1>Categorias</h1>
+
+    {{if .Categories}}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Criada em</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Categories}}
+            <tr>
+                <td>{{.ID}}</td>
+                <td>{{.Name}}</td>
+                <td>{{.Description}}</td>
+                <td>{{.CreatedAt.Format "02/01/2006 15:04"}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <p>Nenhuma categoria cadastrada.</p>
+    {{end}}
+</body>
+</html>

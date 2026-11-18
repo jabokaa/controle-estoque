@@ -1,11 +1,11 @@
 -- +goose Up
-CREATE TABLE categorias (
+CREATE TABLE categories (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome        TEXT      NOT NULL UNIQUE,
-    descricao   TEXT,
+    name        TEXT      NOT NULL UNIQUE,
+    description TEXT,
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- +goose Down
-DROP TABLE categorias;
+DROP TABLE categories;

@@ -18,6 +18,8 @@ Acesse http://localhost:8080. Execute o comando na raiz do projeto, pois os temp
 
 A versão em HTML do diagrama está em [docs/arquitetura.html](docs/arquitetura.html).
 
+Vem do Laravel? Veja o de-para em [docs/laravel-para-clean-architecture.md](docs/laravel-para-clean-architecture.md).
+
 ### Regra de dependência
 
 O código só pode importar camadas mais internas:

@@ -20,14 +20,14 @@ func Load() Config {
 
 	return Config{
 		Port:     getEnv("PORT", "8080"),
-		DBDriver: getEnv("DB_DRIVER", "sqlite3"),
+		DBDriver: getEnv("DB_DRIVER", "sqlite"),
 		DBDSN:    getEnv("DB_DSN", "./estoque.db"),
 	}
 }
 
 func getEnv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
 	return fallback
 }
