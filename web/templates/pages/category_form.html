@@ -1,0 +1,72 @@
+{{/* Formulário de cadastro (IsEdit = false) e de edição (IsEdit = true) de categoria. */}}
+
+{{$title := "Nova categoria"}}
+{{$subtitle := "Cadastre uma categoria para agrupar os itens do estoque."}}
+{{if .IsEdit}}
+    {{$title = "Editar categoria"}}
+    {{$subtitle = printf "Categoria #%d · criada em %s · atualizada em %s"
+        .Category.ID
+        (.Category.CreatedAt.Format "02/01/2006 15:04")
+        (.Category.UpdatedAt.Format "02/01/2006 15:04")}}
+{{end}}
+
+{{template "layout/start" (dict "Title" $title "Active" "categories")}}
+
+<a class="back-link" href="/categories">{{template "components/icon" "arrow-left"}} Voltar para categorias</a>
+
+{{template "components/page_header" (dict "Eyebrow" "Cadastros" "Title" $title "Subtitle" $subtitle)}}
+
+<section class="panel form-panel">
+    <form method="post" action="{{.Action}}" novalidate>
+        <div class="form-panel-body">
+            {{with .Errors.Get "_form"}}<div class="validation-alert" role="alert">{{template "components/icon" "alert"}}<span>{{.}}</span></div>{{end}}
+
+            {{template "components/form_input" (dict
+                "ID" "category-name"
+                "Name" "name"
+                "Label" "Nome"
+                "Value" .Form.Name
+                "Error" (.Errors.Get "name")
+                "Hint" "Ex.: Eletrônicos, Papelaria, Limpeza."
+                "Required" true
+                "Autofocus" true
+                "Maxlength" 100
+            )}}
+
+            {{template "components/form_textarea" (dict
+                "ID" "category-description"
+                "Name" "description"
+                "Label" "Descrição"
+                "Value" .Form.Description
+                "Error" (.Errors.Get "description")
+                "Hint" "Opcional. Até 255 caracteres."
+                "Maxlength" 255
+                "Rows" 4
+            )}}
+        </div>
+
+        <div class="form-panel-footer">
+            {{if .IsEdit}}
+            <button type="button" class="btn btn-outline-danger"
+                    data-bs-toggle="modal" data-bs-target="#confirm-delete"
+                    data-delete-url="/categories/{{.Category.ID}}/delete" data-delete-name="{{.Category.Name}}">
+                {{template "components/icon" "trash"}} Excluir
+            </button>
+            {{end}}
+
+            <div class="form-panel-actions">
+                <a class="btn btn-light" href="/categories">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    {{template "components/icon" "check"}}
+                    {{if .IsEdit}}Salvar alterações{{else}}Cadastrar categoria{{end}}
+                </button>
+            </div>
+        </div>
+    </form>
+</section>
+
+{{if .IsEdit}}
+{{template "components/confirm_delete_modal" (dict "Title" "Excluir categoria" "Message" "Tem certeza que deseja excluir a categoria")}}
+{{end}}
+
+{{template "layout/end"}}

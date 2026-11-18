@@ -2,9 +2,12 @@
 package handler
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
+	"net/http"
 )
 
 // templates guarda todas as views de web/templates, lidas uma vez ao iniciar:
@@ -41,4 +44,24 @@ func dict(keysAndValues ...any) (map[string]any, error) {
 		values[key] = keysAndValues[index+1]
 	}
 	return values, nil
+}
+
+// render desenha a página com o status HTTP informado.
+// Monta o HTML num buffer antes de enviar: se o template falhar no meio,
+// o usuário recebe um erro 500 em vez de meia página.
+func render(writer http.ResponseWriter, status int, page string, data any) {
+	var buffer bytes.Buffer
+	if err := templates.ExecuteTemplate(&buffer, page, data); err != nil {
+		serverError(writer, "renderizar "+page, err)
+		return
+	}
+	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	writer.WriteHeader(status)
+	_, _ = buffer.WriteTo(writer)
+}
+
+// serverError registra o erro no log e responde 500 sem expor detalhes ao usuário.
+func serverError(writer http.ResponseWriter, action string, err error) {
+	log.Printf("erro ao %s: %v", action, err)
+	http.Error(writer, "Ocorreu um erro inesperado. Tente novamente.", http.StatusInternalServerError)
 }

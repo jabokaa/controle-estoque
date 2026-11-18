@@ -3,6 +3,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"gorm.io/gorm"
@@ -27,17 +28,33 @@ func (categoryModel) TableName() string {
 }
 
 // toEntity converte o model do banco na entidade do domínio.
+// As datas ficam gravadas em UTC no banco e são convertidas para o fuso local aqui.
 func (model categoryModel) toEntity() entity.Category {
 	category := entity.Category{
 		ID:        model.ID,
 		Name:      model.Name,
-		CreatedAt: model.CreatedAt,
-		UpdatedAt: model.UpdatedAt,
+		CreatedAt: model.CreatedAt.Local(),
+		UpdatedAt: model.UpdatedAt.Local(),
 	}
 	if model.Description != nil {
 		category.Description = *model.Description
 	}
 	return category
+}
+
+// newCategoryModel converte a entidade do domínio no model do banco.
+// Descrição vazia vira NULL.
+func newCategoryModel(category entity.Category) categoryModel {
+	model := categoryModel{
+		ID:        category.ID,
+		Name:      category.Name,
+		CreatedAt: category.CreatedAt,
+		UpdatedAt: category.UpdatedAt,
+	}
+	if category.Description != "" {
+		model.Description = &category.Description
+	}
+	return model
 }
 
 // categorySortColumns liga cada campo de ordenação do domínio a uma coluna da tabela.
@@ -95,4 +112,70 @@ func (categoryRepository *CategoryRepositoryGorm) filtered(ctx context.Context, 
 		statement = statement.Where(`name LIKE ? ESCAPE '\'`, "%"+escapeLike(query.Name)+"%")
 	}
 	return statement
+}
+
+// FindByID: SELECT * FROM categories WHERE id = ? LIMIT 1
+func (categoryRepository *CategoryRepositoryGorm) FindByID(ctx context.Context, id int64) (entity.Category, error) {
+	var model categoryModel
+	err := categoryRepository.db.WithContext(ctx).First(&model, id).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return entity.Category{}, repository.ErrNotFound
+	}
+	if err != nil {
+		return entity.Category{}, err
+	}
+	return model.toEntity(), nil
+}
+
+// ExistsByName: SELECT count(*) FROM categories WHERE name = ? COLLATE NOCASE AND id <> ?
+// COLLATE NOCASE faz "papelaria" e "Papelaria" serem considerados o mesmo nome.
+func (categoryRepository *CategoryRepositoryGorm) ExistsByName(ctx context.Context, name string, ignoreID int64) (bool, error) {
+	var count int64
+	err := categoryRepository.db.WithContext(ctx).
+		Model(&categoryModel{}).
+		Where("name = ? COLLATE NOCASE", name).
+		Where("id <> ?", ignoreID).
+		Count(&count).Error
+	return count > 0, err
+}
+
+// Create: INSERT INTO categories (name, description, created_at, updated_at) VALUES (...)
+func (categoryRepository *CategoryRepositoryGorm) Create(ctx context.Context, category *entity.Category) error {
+	model := newCategoryModel(*category)
+	if err := categoryRepository.db.WithContext(ctx).Create(&model).Error; err != nil {
+		return err
+	}
+	*category = model.toEntity() // devolve o ID e as datas geradas
+	return nil
+}
+
+// Update: UPDATE categories SET name = ?, description = ?, updated_at = ? WHERE id = ?
+func (categoryRepository *CategoryRepositoryGorm) Update(ctx context.Context, category *entity.Category) error {
+	model := newCategoryModel(*category)
+	model.UpdatedAt = time.Now().UTC()
+
+	result := categoryRepository.db.WithContext(ctx).
+		Model(&categoryModel{ID: category.ID}).
+		Select("name", "description", "updated_at"). // grava inclusive description NULL
+		Updates(&model)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return repository.ErrNotFound
+	}
+	category.UpdatedAt = model.UpdatedAt.Local()
+	return nil
+}
+
+// Delete: DELETE FROM categories WHERE id = ?
+func (categoryRepository *CategoryRepositoryGorm) Delete(ctx context.Context, id int64) error {
+	result := categoryRepository.db.WithContext(ctx).Delete(&categoryModel{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return repository.ErrNotFound
+	}
+	return nil
 }

@@ -858,3 +858,278 @@ a.page-button:hover {
 .validation-alert + .table-responsive {
     margin-top: 1rem;
 }
+
+/* --- botões extras (seguem os tokens) --- */
+:root {
+    --danger-500: #e5484d;
+    --danger-600: #cd2b31;
+    --danger-50: #fff5f5;
+    --success-600: #18794e;
+    --success-50: #effcf5;
+}
+
+.btn-light {
+    --bs-btn-bg: var(--surface-muted);
+    --bs-btn-border-color: var(--border);
+    --bs-btn-hover-bg: #ececf5;
+    --bs-btn-hover-border-color: var(--border);
+    --bs-btn-color: var(--ink-700);
+}
+
+.btn-danger {
+    --bs-btn-bg: var(--danger-500);
+    --bs-btn-border-color: var(--danger-500);
+    --bs-btn-hover-bg: var(--danger-600);
+    --bs-btn-hover-border-color: var(--danger-600);
+    --bs-btn-active-bg: var(--danger-600);
+}
+
+.btn-outline-danger {
+    --bs-btn-color: var(--danger-600);
+    --bs-btn-border-color: #f3c5c7;
+    --bs-btn-hover-bg: var(--danger-50);
+    --bs-btn-hover-color: var(--danger-600);
+    --bs-btn-hover-border-color: var(--danger-500);
+    --bs-btn-active-bg: var(--danger-50);
+    --bs-btn-active-color: var(--danger-600);
+}
+
+/* --- ações da tabela (icon-button) --- */
+.data-table .cell-actions {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.icon-button {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--ink-500);
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.icon-button .icon {
+    width: 17px;
+    height: 17px;
+}
+
+.icon-button:hover {
+    border-color: var(--border);
+    background: var(--brand-50);
+    color: var(--brand-600);
+}
+
+.icon-button.is-danger:hover {
+    background: var(--danger-50);
+    color: var(--danger-600);
+}
+
+/* --- flash --- */
+.flash {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid;
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+    font-weight: 500;
+    animation: flash-in 0.25s ease-out;
+}
+
+.flash > span {
+    flex: 1;
+}
+
+.flash-success {
+    border-color: #bfe8d2;
+    background: var(--success-50);
+    color: var(--success-600);
+}
+
+.flash-danger {
+    border-color: #fbd5d6;
+    background: var(--danger-50);
+    color: var(--danger-600);
+}
+
+.flash-close {
+    display: grid;
+    padding: 0.25rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    opacity: 0.7;
+}
+
+.flash-close:hover {
+    opacity: 1;
+}
+
+.flash-close .icon {
+    width: 16px;
+    height: 16px;
+}
+
+@keyframes flash-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+/* --- back-link --- */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink-500);
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: var(--brand-600);
+}
+
+.back-link .icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* --- form-panel / form-field --- */
+.form-panel {
+    max-width: 720px;
+}
+
+.form-panel-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.75rem 1.5rem;
+}
+
+.form-panel-body .validation-alert {
+    margin: 0;
+}
+
+.form-panel-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface-muted);
+}
+
+
+.form-panel-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.form-field-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+.required-mark {
+    color: var(--danger-500);
+}
+
+.form-field-hint {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--ink-500);
+}
+
+.form-control {
+    padding: 0.65rem 0.9rem;
+    border-color: var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+}
+
+.form-control:focus {
+    border-color: var(--brand-300);
+    box-shadow: 0 0 0 4px rgba(91, 79, 245, 0.12);
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger-500);
+    background-image: none;
+    padding-right: 0.9rem;
+}
+
+.form-control.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(229, 72, 77, 0.14);
+}
+
+.invalid-feedback {
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--danger-600);
+}
+
+/* --- confirm_delete_modal --- */
+.confirm-modal {
+    padding: 2rem 1.75rem 1.5rem;
+    border: 0;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: 0 24px 64px -24px rgba(22, 21, 43, 0.45);
+}
+
+.confirm-modal-icon {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 1rem;
+    border-radius: 18px;
+    background: var(--danger-50);
+    color: var(--danger-500);
+}
+
+.confirm-modal-icon .icon {
+    width: 26px;
+    height: 26px;
+}
+
+.confirm-modal-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.confirm-modal-text {
+    margin: 0 0 1.5rem;
+    color: var(--ink-500);
+}
+
+.confirm-modal-text strong {
+    color: var(--ink-900);
+}
+
+.confirm-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.modal-backdrop.show {
+    opacity: 0.4;
+}

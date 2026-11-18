@@ -14,8 +14,14 @@ type App struct {
 
 func NewApp(db *gorm.DB) *App {
 	categoryRepo := repository.NewCategoryRepositoryGorm(db)
-	listCategories := usecase.NewListCategories(categoryRepo)
-	categoryHandler := handler.NewCategoryHandler(listCategories)
+	categoryHandler := handler.NewCategoryHandler(handler.CategoryUseCases{
+		List:   usecase.NewListCategories(categoryRepo),
+		Get:    usecase.NewGetCategory(categoryRepo),
+		Create: usecase.NewCreateCategory(categoryRepo),
+		Update: usecase.NewUpdateCategory(categoryRepo),
+		Delete: usecase.NewDeleteCategory(categoryRepo),
+	})
+
 	app := &App{}
 	app.CategoryHandler = categoryHandler
 	return app

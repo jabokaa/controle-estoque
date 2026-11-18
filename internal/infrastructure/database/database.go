@@ -4,6 +4,7 @@ package database
 import (
 	"embed"
 	"fmt"
+	"time"
 
 	"github.com/glebarez/sqlite" // driver SQLite para o GORM, escrito em Go puro (sem CGO)
 	"github.com/pressly/goose/v3"
@@ -23,7 +24,11 @@ func Connect(driver, dsn string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("driver de banco não suportado: %s", driver)
 	}
 
-	connection, err := gorm.Open(dialector, &gorm.Config{})
+	connection, err := gorm.Open(dialector, &gorm.Config{
+		// Grava created_at/updated_at sempre em UTC, igual ao CURRENT_TIMESTAMP do SQLite.
+		// A conversão para o fuso local acontece ao ler (ver toEntity nos repositórios).
+		NowFunc: func() time.Time { return time.Now().UTC() },
+	})
 	if err != nil {
 		return nil, err
 	}

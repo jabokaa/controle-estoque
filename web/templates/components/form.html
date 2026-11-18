@@ -1,0 +1,80 @@
+{{/* Componentes de formulário e de retorno ao usuário (mensagens, confirmação). */}}
+
+{{/*
+    Campo de texto com label, dica e mensagem de erro.
+    Parâmetros: ID, Name, Label, Value, Error, Hint, Required (bool), Autofocus (bool), Maxlength.
+*/}}
+{{define "components/form_input"}}
+<div class="form-field">
+    <label class="form-field-label" for="{{.ID}}">
+        {{.Label}}{{if .Required}} <span class="required-mark" aria-hidden="true">*</span>{{end}}
+    </label>
+    <input class="form-control{{if .Error}} is-invalid{{end}}" type="text" id="{{.ID}}" name="{{.Name}}" value="{{.Value}}"
+           {{if .Maxlength}}maxlength="{{.Maxlength}}"{{end}} {{if .Required}}aria-required="true"{{end}} {{if .Autofocus}}autofocus{{end}}
+           {{if .Error}}aria-invalid="true" aria-describedby="{{.ID}}-error"{{else if .Hint}}aria-describedby="{{.ID}}-hint"{{end}}>
+    {{if .Error}}<div class="invalid-feedback" id="{{.ID}}-error">{{.Error}}</div>
+    {{else if .Hint}}<div class="form-field-hint" id="{{.ID}}-hint">{{.Hint}}</div>{{end}}
+</div>
+{{end}}
+
+{{/*
+    Área de texto com label, dica e mensagem de erro.
+    Parâmetros: ID, Name, Label, Value, Error, Hint, Required (bool), Maxlength, Rows.
+*/}}
+{{define "components/form_textarea"}}
+<div class="form-field">
+    <label class="form-field-label" for="{{.ID}}">
+        {{.Label}}{{if .Required}} <span class="required-mark" aria-hidden="true">*</span>{{end}}
+    </label>
+    <textarea class="form-control{{if .Error}} is-invalid{{end}}" id="{{.ID}}" name="{{.Name}}" rows="{{or .Rows 3}}"
+              {{if .Maxlength}}maxlength="{{.Maxlength}}"{{end}} {{if .Required}}aria-required="true"{{end}}
+              {{if .Error}}aria-invalid="true" aria-describedby="{{.ID}}-error"{{else if .Hint}}aria-describedby="{{.ID}}-hint"{{end}}>{{.Value}}</textarea>
+    {{if .Error}}<div class="invalid-feedback" id="{{.ID}}-error">{{.Error}}</div>
+    {{else if .Hint}}<div class="form-field-hint" id="{{.ID}}-hint">{{.Hint}}</div>{{end}}
+</div>
+{{end}}
+
+{{/*
+    Mensagem que aparece uma vez depois de um redirect ("Categoria X cadastrada.").
+    Recebe um *flashMessage (Kind: "success" ou "danger", Text). Não mostra nada se for nil.
+*/}}
+{{define "components/flash"}}
+{{if .}}
+<div class="flash flash-{{.Kind}}" role="status">
+    {{if eq .Kind "success"}}{{template "components/icon" "check"}}{{else}}{{template "components/icon" "alert"}}{{end}}
+    <span>{{.Text}}</span>
+    <button type="button" class="flash-close" aria-label="Fechar mensagem" onclick="this.parentElement.remove()">
+        {{template "components/icon" "x"}}
+    </button>
+</div>
+{{end}}
+{{end}}
+
+{{/*
+    Modal de confirmação de exclusão. Um só por página, reaproveitado por todos os botões de excluir.
+    O botão que abre o modal informa o que excluir, e o web/static/js/app.js preenche o modal:
+
+        <button data-bs-toggle="modal" data-bs-target="#confirm-delete"
+                data-delete-url="/categories/3/delete" data-delete-name="Papelaria">
+
+    Parâmetros: Title, Message (texto antes do nome do registro).
+*/}}
+{{define "components/confirm_delete_modal"}}
+<div class="modal fade" id="confirm-delete" tabindex="-1" aria-labelledby="confirm-delete-title" aria-hidden="true" data-confirm-delete>
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content confirm-modal" method="post" action="">
+            <input type="hidden" name="return_to" value="">
+            <div class="confirm-modal-icon">{{template "components/icon" "trash"}}</div>
+            <h2 class="confirm-modal-title" id="confirm-delete-title">{{.Title}}</h2>
+            <p class="confirm-modal-text">
+                {{.Message}} <strong data-delete-name></strong>?<br>
+                Essa ação não pode ser desfeita.
+            </p>
+            <div class="confirm-modal-actions">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger">{{template "components/icon" "trash"}} Excluir</button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

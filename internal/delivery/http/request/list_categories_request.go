@@ -15,6 +15,9 @@ type ListCategoriesRequest struct {
 // PerPageOptions são os tamanhos de página que a tela oferece (os mesmos da regra oneof acima).
 var PerPageOptions = []int{10, 25, 50}
 
+// ResetsInvalidFields: num filtro de listagem, valor inválido vira o padrão em vez de bloquear a tela.
+func (listRequest *ListCategoriesRequest) ResetsInvalidFields() {}
+
 // SetDefaults preenche o que não veio na URL.
 func (listRequest *ListCategoriesRequest) SetDefaults() {
 	if listRequest.Sort == "" {

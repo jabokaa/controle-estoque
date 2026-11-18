@@ -4,7 +4,11 @@
     "Eyebrow" "Cadastros"
     "Title" "Categorias"
     "Subtitle" "Organize os itens do estoque por categoria."
+    "ActionLabel" "Nova categoria"
+    "ActionURL" "/categories/new"
 )}}
+
+{{template "components/flash" .Flash}}
 
 <section class="panel">
     {{/*
@@ -53,6 +57,7 @@
                 <thead>
                     <tr>
                         {{range .Columns}}{{template "components/sortable_header" .}}{{end}}
+                        <th scope="col" class="cell-actions"><span class="visually-hidden">Ações</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,6 +74,16 @@
                         </td>
                         <td>{{if .Description}}{{.Description}}{{else}}<span class="text-soft">—</span>{{end}}</td>
                         <td class="cell-date">{{.CreatedAt.Format "02/01/2006"}}<small>{{.CreatedAt.Format "15:04"}}</small></td>
+                        <td class="cell-actions">
+                            {{/* hx-boost="false": abre a página de edição inteira, não só a tabela */}}
+                            <a class="icon-button" href="/categories/{{.ID}}/edit" hx-boost="false"
+                               title="Editar" aria-label="Editar {{.Name}}">{{template "components/icon" "pencil"}}</a>
+                            <button type="button" class="icon-button is-danger" title="Excluir" aria-label="Excluir {{.Name}}"
+                                    data-bs-toggle="modal" data-bs-target="#confirm-delete"
+                                    data-delete-url="/categories/{{.ID}}/delete" data-delete-name="{{.Name}}">
+                                {{template "components/icon" "trash"}}
+                            </button>
+                        </td>
                     </tr>
                     {{end}}
                 </tbody>
@@ -92,5 +107,7 @@
         {{end}}
     </div>
 </section>
+
+{{template "components/confirm_delete_modal" (dict "Title" "Excluir categoria" "Message" "Tem certeza que deseja excluir a categoria")}}
 
 {{template "layout/end"}}

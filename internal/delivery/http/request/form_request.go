@@ -32,6 +32,13 @@ type Defaulter interface {
 	SetDefaults()
 }
 
+// InvalidFieldResetter é implementado pelos requests que, em vez de recusar um valor inválido,
+// trocam esse valor pelo padrão (ex.: filtros de listagem: ?page=abc vira página 1).
+// Formulários NÃO implementam: o valor digitado precisa voltar para a tela junto com o erro.
+type InvalidFieldResetter interface {
+	ResetsInvalidFields()
+}
+
 // ValidationErrors guarda a mensagem de erro de cada campo inválido, pelo nome do campo no formulário.
 type ValidationErrors map[string]string
 
@@ -84,9 +91,13 @@ func init() {
 // Parse preenche target (ponteiro para uma struct de request) com os dados da requisição,
 // aplica os valores padrão e valida.
 //
-// Devolve nil quando está tudo certo. Quando há erros, os campos inválidos voltam ao valor
-// padrão, então o request continua utilizável (ex.: listar com a ordenação padrão e avisar o usuário).
+// Devolve nil quando está tudo certo. Quando há erros:
+//   - por padrão, os valores digitados continuam na struct, para reexibir o formulário (como o old() do Laravel);
+//   - se o request implementar InvalidFieldResetter, os campos inválidos voltam ao valor padrão,
+//     e o request continua utilizável (ex.: listar com a ordenação padrão e avisar o usuário).
 func Parse(httpRequest *http.Request, target any) ValidationErrors {
+	_, resetsInvalidFields := target.(InvalidFieldResetter)
+
 	// Trata o parsing do formulário.
 	if err := httpRequest.ParseForm(); err != nil {
 		return ValidationErrors{"_form": "Não foi possível ler os dados enviados."}
@@ -134,14 +145,18 @@ func Parse(httpRequest *http.Request, target any) ValidationErrors {
 		for _, fieldError := range fieldErrors {
 			structField, _ := targetType.FieldByName(fieldError.StructField())
 			validationErrors[structField.Tag.Get("form")] = fieldError.Translate(translator) + "."
-			targetValue.FieldByName(fieldError.StructField()).SetZero()
+			if resetsInvalidFields {
+				targetValue.FieldByName(fieldError.StructField()).SetZero()
+			}
 		}
 	}
 
 	if len(validationErrors) == 0 {
 		return nil
 	}
-	applyDefaults(target) // devolve o valor padrão aos campos que foram zerados por serem inválidos
+	if resetsInvalidFields {
+		applyDefaults(target) // devolve o valor padrão aos campos que foram zerados por serem inválidos
+	}
 	return validationErrors
 }
 
