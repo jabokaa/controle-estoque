@@ -642,3 +642,219 @@ a.module-card:hover {
 a.module-card:hover .module-link .icon {
     transform: translateX(3px);
 }
+
+/* --- panel-toolbar (filtros acima da tabela) --- */
+.panel-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.panel-results {
+    transition: opacity 0.15s;
+}
+
+/* Enquanto o HTMX busca a nova página, a tabela fica esmaecida */
+.panel-results.htmx-request {
+    opacity: 0.55;
+}
+
+/* --- search_input --- */
+.search-field {
+    position: relative;
+    flex: 1 1 260px;
+    max-width: 380px;
+}
+
+.search-field-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.85rem;
+    transform: translateY(-50%);
+    display: grid;
+    color: var(--ink-500);
+    pointer-events: none;
+}
+
+.search-field-icon .icon {
+    width: 17px;
+    height: 17px;
+}
+
+.search-field-input {
+    width: 100%;
+    padding: 0.6rem 0.9rem 0.6rem 2.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+    color: var(--ink-900);
+    font-size: 0.92rem;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+
+.search-field-input::placeholder {
+    color: var(--ink-500);
+}
+
+.search-field-input:focus {
+    outline: none;
+    border-color: var(--brand-300);
+    background: var(--surface);
+    box-shadow: 0 0 0 4px rgba(91, 79, 245, 0.12);
+}
+
+.search-field.has-error .search-field-input {
+    border-color: #e5484d;
+}
+
+/* --- seletor "por página" --- */
+.per-page-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ink-500);
+    white-space: nowrap;
+}
+
+.per-page-field .form-select {
+    width: auto;
+    border-color: var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.per-page-field .form-select:focus {
+    border-color: var(--brand-300);
+    box-shadow: 0 0 0 4px rgba(91, 79, 245, 0.12);
+}
+
+/* --- sortable_header --- */
+.data-table th.sortable {
+    padding: 0;
+}
+
+.data-table th.sortable a {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.75rem 1.5rem;
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.data-table th.sortable a:hover,
+.data-table th.is-sorted a {
+    color: var(--brand-600);
+}
+
+.sort-indicator {
+    display: grid;
+    opacity: 0.45;
+}
+
+.is-sorted .sort-indicator,
+.sortable a:hover .sort-indicator {
+    opacity: 1;
+}
+
+.sort-indicator .icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* --- pagination --- */
+.pagination-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.pagination-summary {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ink-500);
+}
+
+.pagination-summary strong {
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+.pagination-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.page-button {
+    min-width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    padding: 0 0.6rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink-700);
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.page-button .icon {
+    width: 16px;
+    height: 16px;
+}
+
+a.page-button:hover {
+    border-color: var(--border);
+    background: var(--surface-muted);
+    color: var(--brand-600);
+}
+
+.page-button.is-active {
+    background: var(--brand-500);
+    color: #fff;
+    box-shadow: 0 6px 14px -8px rgba(91, 79, 245, 0.9);
+}
+
+.page-button.is-disabled {
+    color: var(--ink-300);
+}
+
+.page-gap {
+    padding: 0 0.25rem;
+    color: var(--ink-500);
+}
+
+/* --- validation_alert --- */
+.validation-alert {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 1.5rem 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid #fbd5d6;
+    border-radius: var(--radius-sm);
+    background: #fff5f5;
+    color: #a1262b;
+    font-size: 0.88rem;
+}
+
+.validation-alert ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.1rem;
+}
+
+.validation-alert + .table-responsive {
+    margin-top: 1rem;
+}

@@ -7,47 +7,90 @@
 )}}
 
 <section class="panel">
-    <div class="panel-header">
-        <h2 class="panel-title">Todas as categorias</h2>
-        <span class="count-badge">{{len .Categories}}</span>
-    </div>
+    {{/*
+        Filtros. Com o HTMX, digitar na busca ou trocar a quantidade por página recarrega só a
+        tabela (#categories-results), sem recarregar a página. Sem JavaScript, o formulário funciona
+        como um GET comum. A ordenação atual vai junto pelos campos ocultos dentro da tabela
+        (atributo form="categories-filter"); a página volta para a 1 a cada novo filtro.
+    */}}
+    <form class="panel-toolbar" id="categories-filter" method="get" action="/categories" role="search"
+          hx-get="/categories" hx-target="#categories-results" hx-select="#categories-results"
+          hx-swap="outerHTML" hx-push-url="true" hx-sync="this:replace" hx-indicator="#categories-results">
+        {{template "components/search_input" (dict
+            "ID" "category-search"
+            "Name" "name"
+            "Value" .Filter.Name
+            "Label" "Buscar categoria por nome"
+            "Placeholder" "Buscar por nome…"
+            "Error" (.Errors.Get "name")
+            "HtmxURL" "/categories"
+        )}}
 
-    {{if .Categories}}
-    <div class="table-responsive">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th scope="col">Categoria</th>
-                    <th scope="col">Descrição</th>
-                    <th scope="col">Criada em</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{range .Categories}}
-                <tr>
-                    <td>
-                        <div class="cell-entity">
-                            <span class="entity-avatar">{{template "components/icon" "tag"}}</span>
-                            <div>
-                                <span class="entity-name">{{.Name}}</span>
-                                <span class="entity-id">#{{.ID}}</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td>{{if .Description}}{{.Description}}{{else}}<span class="text-soft">—</span>{{end}}</td>
-                    <td class="cell-date">{{.CreatedAt.Format "02/01/2006"}}<small>{{.CreatedAt.Format "15:04"}}</small></td>
-                </tr>
+        <label class="per-page-field">
+            <span>Por página</span>
+            <select class="form-select form-select-sm" name="per_page"
+                    hx-get="/categories" hx-trigger="change" hx-include="closest form">
+                {{range .PerPageOptions}}
+                <option value="{{.}}"{{if eq . $.Filter.PerPage}} selected{{end}}>{{.}}</option>
                 {{end}}
-            </tbody>
-        </table>
+            </select>
+        </label>
+
+        <noscript><button class="btn btn-primary btn-sm" type="submit">Filtrar</button></noscript>
+    </form>
+
+    <div id="categories-results" class="panel-results"
+         hx-boost="true" hx-target="#categories-results" hx-select="#categories-results" hx-swap="outerHTML">
+
+        <input type="hidden" name="sort" value="{{.Filter.Sort}}" form="categories-filter">
+        <input type="hidden" name="direction" value="{{.Filter.Direction}}" form="categories-filter">
+
+        {{template "components/validation_alert" .Errors}}
+
+        {{if .Categories}}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        {{range .Columns}}{{template "components/sortable_header" .}}{{end}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Categories}}
+                    <tr>
+                        <td>
+                            <div class="cell-entity">
+                                <span class="entity-avatar">{{template "components/icon" "tag"}}</span>
+                                <div>
+                                    <span class="entity-name">{{.Name}}</span>
+                                    <span class="entity-id">#{{.ID}}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{if .Description}}{{.Description}}{{else}}<span class="text-soft">—</span>{{end}}</td>
+                        <td class="cell-date">{{.CreatedAt.Format "02/01/2006"}}<small>{{.CreatedAt.Format "15:04"}}</small></td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        {{template "components/pagination" .Pagination}}
+
+        {{else if .Filter.Name}}
+        {{template "components/empty_state" (dict
+            "Icon" "search"
+            "Title" "Nenhuma categoria encontrada"
+            "Message" (printf "Nada corresponde a “%s”. Tente buscar por outro nome." .Filter.Name)
+        )}}
+        {{else}}
+        {{template "components/empty_state" (dict
+            "Icon" "inbox"
+            "Title" "Nenhuma categoria cadastrada"
+            "Message" "Quando você cadastrar categorias, elas vão aparecer aqui."
+        )}}
+        {{end}}
     </div>
-    {{else}}
-    {{template "components/empty_state" (dict
-        "Icon" "inbox"
-        "Title" "Nenhuma categoria cadastrada"
-        "Message" "Quando você cadastrar categorias, elas vão aparecer aqui."
-    )}}
-    {{end}}
 </section>
 
 {{template "layout/end"}}

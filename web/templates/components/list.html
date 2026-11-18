@@ -1,0 +1,86 @@
+{{/* Componentes de listagem: busca, cabeçalho ordenável, paginação e alerta de validação. */}}
+
+{{/*
+    Campo de busca.
+    Parâmetros: ID, Name, Value, Label, Placeholder, Error (mensagem, opcional), HtmxURL (busca enquanto digita).
+*/}}
+{{define "components/search_input"}}
+<div class="search-field{{if .Error}} has-error{{end}}">
+    <label class="visually-hidden" for="{{.ID}}">{{.Label}}</label>
+    <span class="search-field-icon">{{template "components/icon" "search"}}</span>
+    <input class="search-field-input" type="search" id="{{.ID}}" name="{{.Name}}" value="{{.Value}}"
+           placeholder="{{.Placeholder}}" autocomplete="off" maxlength="100"
+           {{if .Error}}aria-invalid="true"{{end}}
+           hx-get="{{.HtmxURL}}" hx-trigger="input changed delay:350ms, search" hx-include="closest form">
+</div>
+{{end}}
+
+{{/*
+    Cabeçalho de coluna que ordena a tabela ao ser clicado.
+    Recebe um sortableColumn (Label, URL, Active, Descending).
+*/}}
+{{define "components/sortable_header"}}
+<th scope="col" class="sortable{{if .Active}} is-sorted{{end}}"
+    {{if .Active}}aria-sort="{{if .Descending}}descending{{else}}ascending{{end}}"{{end}}>
+    <a href="{{.URL}}">
+        {{.Label}}
+        <span class="sort-indicator">
+            {{if not .Active}}{{template "components/icon" "chevrons-up-down"}}
+            {{else if .Descending}}{{template "components/icon" "chevron-down"}}
+            {{else}}{{template "components/icon" "chevron-up"}}{{end}}
+        </span>
+    </a>
+</th>
+{{end}}
+
+{{/*
+    Paginação. Recebe um paginationView (Total, From, To, TotalPages, PreviousURL, NextURL, Links).
+*/}}
+{{define "components/pagination"}}
+<div class="pagination-bar">
+    <p class="pagination-summary">
+        {{if .Total}}Mostrando <strong>{{.From}}–{{.To}}</strong> de <strong>{{.Total}}</strong>{{else}}Nenhum resultado{{end}}
+    </p>
+
+    {{if gt .TotalPages 1}}
+    <nav class="pagination-nav" aria-label="Paginação">
+        {{if .PreviousURL}}
+        <a class="page-button" href="{{.PreviousURL}}" aria-label="Página anterior">{{template "components/icon" "chevron-left"}}</a>
+        {{else}}
+        <span class="page-button is-disabled" aria-hidden="true">{{template "components/icon" "chevron-left"}}</span>
+        {{end}}
+
+        {{range .Links}}
+            {{if .IsGap}}
+            <span class="page-gap">…</span>
+            {{else if .Active}}
+            <span class="page-button is-active" aria-current="page">{{.Number}}</span>
+            {{else}}
+            <a class="page-button" href="{{.URL}}">{{.Number}}</a>
+            {{end}}
+        {{end}}
+
+        {{if .NextURL}}
+        <a class="page-button" href="{{.NextURL}}" aria-label="Próxima página">{{template "components/icon" "chevron-right"}}</a>
+        {{else}}
+        <span class="page-button is-disabled" aria-hidden="true">{{template "components/icon" "chevron-right"}}</span>
+        {{end}}
+    </nav>
+    {{end}}
+</div>
+{{end}}
+
+{{/*
+    Lista os erros de validação (request.ValidationErrors). Não mostra nada se não houver erros.
+*/}}
+{{define "components/validation_alert"}}
+{{if .}}
+<div class="validation-alert" role="alert">
+    {{template "components/icon" "alert"}}
+    <div>
+        <strong>Alguns filtros foram ignorados:</strong>
+        <ul>{{range .}}<li>{{.}}</li>{{end}}</ul>
+    </div>
+</div>
+{{end}}
+{{end}}
