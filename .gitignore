@@ -1,2 +1,11 @@
 /bin/
 *.exe
+
+# Configuração local
+.env
+
+# Banco SQLite local
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
