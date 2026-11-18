@@ -1133,3 +1133,107 @@ a.page-button:hover {
 .modal-backdrop.show {
     opacity: 0.4;
 }
+
+/* --- filtros extras na barra (filter_select) --- */
+.panel-toolbar-filters {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.filter-select {
+    flex: 0 1 220px;
+}
+
+.filter-select .form-select,
+.form-select {
+    border-color: var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.filter-select .form-select {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    background-color: var(--surface-muted);
+    font-size: 0.92rem;
+}
+
+.form-select:focus {
+    border-color: var(--brand-300);
+    box-shadow: 0 0 0 4px rgba(91, 79, 245, 0.12);
+}
+
+.form-panel .form-select {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+    font-size: 0.95rem;
+}
+
+.form-select.is-invalid {
+    border-color: var(--danger-500);
+}
+
+/* --- form-row: dois campos lado a lado (empilham no celular) --- */
+.form-row {
+    display: grid;
+    gap: 1.25rem;
+}
+
+@media (min-width: 576px) {
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.validation-alert a {
+    color: inherit;
+    font-weight: 600;
+}
+
+/* --- category-chip (categoria do item na tabela) --- */
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: var(--brand-50);
+    color: var(--brand-700);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s;
+}
+
+.category-chip:hover {
+    background: var(--brand-100);
+    color: var(--brand-700);
+}
+
+.category-chip .icon {
+    width: 13px;
+    height: 13px;
+}
+
+/* --- quantidade / estoque --- */
+.quantity-value {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-900);
+}
+
+.stock-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.stock-badge.is-empty {
+    background: var(--danger-50);
+    color: var(--danger-600);
+}

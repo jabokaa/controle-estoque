@@ -75,7 +75,9 @@
                         <td>{{if .Description}}{{.Description}}{{else}}<span class="text-soft">—</span>{{end}}</td>
                         <td class="cell-date">{{.CreatedAt.Format "02/01/2006"}}<small>{{.CreatedAt.Format "15:04"}}</small></td>
                         <td class="cell-actions">
-                            {{/* hx-boost="false": abre a página de edição inteira, não só a tabela */}}
+                            {{/* hx-boost="false": abre a página inteira, não só a tabela */}}
+                            <a class="icon-button" href="/items?category_id={{.ID}}" hx-boost="false"
+                               title="Ver itens" aria-label="Ver itens de {{.Name}}">{{template "components/icon" "box"}}</a>
                             <a class="icon-button" href="/categories/{{.ID}}/edit" hx-boost="false"
                                title="Editar" aria-label="Editar {{.Name}}">{{template "components/icon" "pencil"}}</a>
                             <button type="button" class="icon-button is-danger" title="Excluir" aria-label="Excluir {{.Name}}"

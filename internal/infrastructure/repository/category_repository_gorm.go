@@ -179,3 +179,12 @@ func (categoryRepository *CategoryRepositoryGorm) Delete(ctx context.Context, id
 	}
 	return nil
 }
+
+// ListAll: SELECT * FROM categories ORDER BY name
+func (categoryRepository *CategoryRepositoryGorm) ListAll(ctx context.Context) ([]entity.Category, error) {
+	var models []categoryModel
+	if err := categoryRepository.db.WithContext(ctx).Order("name").Find(&models).Error; err != nil {
+		return nil, err
+	}
+	return toEntities(models, categoryModel.toEntity), nil
+}

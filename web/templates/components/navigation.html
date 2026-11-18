@@ -30,7 +30,7 @@
 
             <span class="sidebar-section">Cadastros</span>
             {{template "components/nav_item" (dict "Label" "Categorias" "URL" "/categories" "Icon" "tag" "Active" (eq . "categories"))}}
-            {{template "components/nav_item" (dict "Label" "Itens" "Icon" "box" "Soon" true)}}
+            {{template "components/nav_item" (dict "Label" "Itens" "URL" "/items" "Icon" "box" "Active" (eq . "items"))}}
 
             <span class="sidebar-section">Operação</span>
             {{template "components/nav_item" (dict "Label" "Movimentações" "Icon" "arrows" "Soon" true)}}

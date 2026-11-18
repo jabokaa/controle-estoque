@@ -1,0 +1,103 @@
+{{/* Formulário de cadastro (IsEdit = false) e de edição (IsEdit = true) de item. */}}
+
+{{$title := "Novo item"}}
+{{$subtitle := "Cadastre um item do estoque e escolha a categoria dele."}}
+{{if .IsEdit}}
+    {{$title = "Editar item"}}
+    {{$subtitle = printf "Item #%d · criado em %s · atualizado em %s"
+        .Item.ID
+        (.Item.CreatedAt.Format "02/01/2006 15:04")
+        (.Item.UpdatedAt.Format "02/01/2006 15:04")}}
+{{end}}
+
+{{template "layout/start" (dict "Title" $title "Active" "items")}}
+
+<a class="back-link" href="/items">{{template "components/icon" "arrow-left"}} Voltar para itens</a>
+
+{{template "components/page_header" (dict "Eyebrow" "Cadastros" "Title" $title "Subtitle" $subtitle)}}
+
+<section class="panel form-panel">
+    <form method="post" action="{{.Action}}" novalidate>
+        <div class="form-panel-body">
+            {{with .Errors.Get "_form"}}<div class="validation-alert" role="alert">{{template "components/icon" "alert"}}<span>{{.}}</span></div>{{end}}
+
+            {{if not .CategoryOptions}}
+            <div class="validation-alert" role="alert">
+                {{template "components/icon" "alert"}}
+                <span>Nenhuma categoria cadastrada. <a href="/categories/new">Cadastre uma categoria</a> antes de cadastrar itens.</span>
+            </div>
+            {{end}}
+
+            {{template "components/form_input" (dict
+                "ID" "item-name"
+                "Name" "name"
+                "Label" "Nome"
+                "Value" .Form.Name
+                "Error" (.Errors.Get "name")
+                "Hint" "Ex.: Cabo HDMI 2m, Caderno universitário."
+                "Required" true
+                "Autofocus" true
+                "Maxlength" 100
+            )}}
+
+            <div class="form-row">
+                {{template "components/form_select" (dict
+                    "ID" "item-category"
+                    "Name" "category_id"
+                    "Label" "Categoria"
+                    "Options" .CategoryOptions
+                    "Placeholder" "Selecione…"
+                    "Error" (.Errors.Get "category_id")
+                    "Required" true
+                )}}
+
+                {{template "components/form_input" (dict
+                    "ID" "item-quantity"
+                    "Name" "quantity"
+                    "Label" "Quantidade em estoque"
+                    "Type" "number"
+                    "Min" "0"
+                    "Max" "1000000"
+                    "Value" .Form.Quantity
+                    "Error" (.Errors.Get "quantity")
+                    "Required" true
+                )}}
+            </div>
+
+            {{template "components/form_textarea" (dict
+                "ID" "item-description"
+                "Name" "description"
+                "Label" "Descrição"
+                "Value" .Form.Description
+                "Error" (.Errors.Get "description")
+                "Hint" "Opcional. Até 255 caracteres."
+                "Maxlength" 255
+                "Rows" 4
+            )}}
+        </div>
+
+        <div class="form-panel-footer">
+            {{if .IsEdit}}
+            <button type="button" class="btn btn-outline-danger"
+                    data-bs-toggle="modal" data-bs-target="#confirm-delete"
+                    data-delete-url="/items/{{.Item.ID}}/delete" data-delete-name="{{.Item.Name}}">
+                {{template "components/icon" "trash"}} Excluir
+            </button>
+            {{end}}
+
+            <div class="form-panel-actions">
+                <a class="btn btn-light" href="/items">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    {{template "components/icon" "check"}}
+                    {{if .IsEdit}}Salvar alterações{{else}}Cadastrar item{{end}}
+                </button>
+            </div>
+        </div>
+    </form>
+</section>
+
+{{if .IsEdit}}
+{{template "components/confirm_delete_modal" (dict "Title" "Excluir item" "Message" "Tem certeza que deseja excluir o item")}}
+{{end}}
+
+{{template "layout/end"}}

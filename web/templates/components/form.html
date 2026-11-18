@@ -2,14 +2,16 @@
 
 {{/*
     Campo de texto com label, dica e mensagem de erro.
-    Parâmetros: ID, Name, Label, Value, Error, Hint, Required (bool), Autofocus (bool), Maxlength.
+    Parâmetros: ID, Name, Label, Value, Error, Hint, Required (bool), Autofocus (bool), Maxlength,
+                Type ("text" se não informado; ex.: "number"), Min e Max (texto, para Type "number").
 */}}
 {{define "components/form_input"}}
 <div class="form-field">
     <label class="form-field-label" for="{{.ID}}">
         {{.Label}}{{if .Required}} <span class="required-mark" aria-hidden="true">*</span>{{end}}
     </label>
-    <input class="form-control{{if .Error}} is-invalid{{end}}" type="text" id="{{.ID}}" name="{{.Name}}" value="{{.Value}}"
+    <input class="form-control{{if .Error}} is-invalid{{end}}" type="{{or .Type "text"}}" id="{{.ID}}" name="{{.Name}}" value="{{.Value}}"
+           {{with .Min}}min="{{.}}"{{end}} {{with .Max}}max="{{.}}"{{end}}
            {{if .Maxlength}}maxlength="{{.Maxlength}}"{{end}} {{if .Required}}aria-required="true"{{end}} {{if .Autofocus}}autofocus{{end}}
            {{if .Error}}aria-invalid="true" aria-describedby="{{.ID}}-error"{{else if .Hint}}aria-describedby="{{.ID}}-hint"{{end}}>
     {{if .Error}}<div class="invalid-feedback" id="{{.ID}}-error">{{.Error}}</div>
@@ -29,6 +31,27 @@
     <textarea class="form-control{{if .Error}} is-invalid{{end}}" id="{{.ID}}" name="{{.Name}}" rows="{{or .Rows 3}}"
               {{if .Maxlength}}maxlength="{{.Maxlength}}"{{end}} {{if .Required}}aria-required="true"{{end}}
               {{if .Error}}aria-invalid="true" aria-describedby="{{.ID}}-error"{{else if .Hint}}aria-describedby="{{.ID}}-hint"{{end}}>{{.Value}}</textarea>
+    {{if .Error}}<div class="invalid-feedback" id="{{.ID}}-error">{{.Error}}</div>
+    {{else if .Hint}}<div class="form-field-hint" id="{{.ID}}-hint">{{.Hint}}</div>{{end}}
+</div>
+{{end}}
+
+{{/*
+    Campo de seleção (<select>) com label, dica e mensagem de erro.
+    Parâmetros: ID, Name, Label, Options ([]selectOption: Value, Label, Selected),
+                Placeholder (primeira opção, vazia), Error, Hint, Required (bool).
+*/}}
+{{define "components/form_select"}}
+<div class="form-field">
+    <label class="form-field-label" for="{{.ID}}">
+        {{.Label}}{{if .Required}} <span class="required-mark" aria-hidden="true">*</span>{{end}}
+    </label>
+    <select class="form-select{{if .Error}} is-invalid{{end}}" id="{{.ID}}" name="{{.Name}}"
+            {{if .Required}}aria-required="true"{{end}}
+            {{if .Error}}aria-invalid="true" aria-describedby="{{.ID}}-error"{{else if .Hint}}aria-describedby="{{.ID}}-hint"{{end}}>
+        {{with .Placeholder}}<option value="">{{.}}</option>{{end}}
+        {{range .Options}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
+    </select>
     {{if .Error}}<div class="invalid-feedback" id="{{.ID}}-error">{{.Error}}</div>
     {{else if .Hint}}<div class="form-field-hint" id="{{.ID}}-hint">{{.Hint}}</div>{{end}}
 </div>

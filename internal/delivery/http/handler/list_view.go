@@ -44,6 +44,13 @@ func newSortableColumns(
 	return columns
 }
 
+// selectOption é uma opção de um campo de seleção (<select>), como a categoria de um item.
+type selectOption struct {
+	Value    int64
+	Label    string
+	Selected bool
+}
+
 // pageLink é um botão da paginação. IsGap marca as reticências entre números distantes.
 type pageLink struct {
 	Number int

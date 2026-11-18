@@ -16,6 +16,22 @@
 {{end}}
 
 {{/*
+    Filtro de seleção na barra de filtros da listagem (ex.: categoria dos itens).
+    Ao trocar a opção, o HTMX recarrega a tabela, levando junto os outros filtros do formulário.
+    Parâmetros: ID, Name, Label, Options ([]selectOption), AllLabel (opção "todos"), HtmxURL.
+*/}}
+{{define "components/filter_select"}}
+<div class="filter-select">
+    <label class="visually-hidden" for="{{.ID}}">{{.Label}}</label>
+    <select class="form-select" id="{{.ID}}" name="{{.Name}}"
+            hx-get="{{.HtmxURL}}" hx-trigger="change" hx-include="closest form">
+        <option value="">{{.AllLabel}}</option>
+        {{range .Options}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
+    </select>
+</div>
+{{end}}
+
+{{/*
     Cabeçalho de coluna que ordena a tabela ao ser clicado.
     Recebe um sortableColumn (Label, URL, Active, Descending).
 */}}

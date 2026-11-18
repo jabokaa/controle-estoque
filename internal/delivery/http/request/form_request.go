@@ -144,7 +144,11 @@ func Parse(httpRequest *http.Request, target any) ValidationErrors {
 		}
 		for _, fieldError := range fieldErrors {
 			structField, _ := targetType.FieldByName(fieldError.StructField())
-			validationErrors[structField.Tag.Get("form")] = fieldError.Translate(translator) + "."
+			formName := structField.Tag.Get("form")
+			if validationErrors.Has(formName) {
+				continue // já tem erro de conversão ("deve ser um número"), que é mais útil
+			}
+			validationErrors[formName] = fieldError.Translate(translator) + "."
 			if resetsInvalidFields {
 				targetValue.FieldByName(fieldError.StructField()).SetZero()
 			}

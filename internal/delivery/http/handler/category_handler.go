@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"controle-estoque/internal/delivery/http/request"
 	"controle-estoque/internal/domain/entity"
@@ -206,6 +205,9 @@ func (categoryHandler *CategoryHandler) Delete(writer http.ResponseWriter, httpR
 	switch {
 	case errors.Is(err, repository.ErrNotFound):
 		setFlash(writer, "danger", "Essa categoria não existe mais.")
+	case errors.Is(err, usecase.ErrCategoryHasItems):
+		setFlash(writer, "danger", fmt.Sprintf(
+			"A categoria “%s” não pode ser excluída porque tem itens cadastrados. Mova ou exclua os itens antes.", category.Name))
 	case err != nil:
 		serverError(writer, "excluir categoria", err)
 		return
@@ -251,13 +253,4 @@ func categoryFieldErrors(err error) request.ValidationErrors {
 func categoryNotFound(writer http.ResponseWriter, httpRequest *http.Request) {
 	setFlash(writer, "danger", "Categoria não encontrada.")
 	http.Redirect(writer, httpRequest, "/categories", http.StatusSeeOther)
-}
-
-// safeReturnPath só aceita caminhos internos da listagem de categorias,
-// para ninguém usar o return_to para mandar o usuário a outro site.
-func safeReturnPath(path, fallback string) string {
-	if path == "/categories" || strings.HasPrefix(path, "/categories?") {
-		return path
-	}
-	return fallback
 }

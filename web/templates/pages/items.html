@@ -1,0 +1,137 @@
+{{template "layout/start" (dict "Title" "Itens" "Active" "items")}}
+
+{{/* Com uma categoria filtrada, o "Novo item" já abre com ela escolhida. */}}
+{{$newItemURL := "/items/new"}}
+{{if .Filter.CategoryID}}{{$newItemURL = printf "/items/new?category_id=%d" .Filter.CategoryID}}{{end}}
+
+{{template "components/page_header" (dict
+    "Eyebrow" "Cadastros"
+    "Title" "Itens"
+    "Subtitle" "Os produtos do estoque, com categoria e quantidade."
+    "ActionLabel" "Novo item"
+    "ActionURL" $newItemURL
+)}}
+
+{{template "components/flash" .Flash}}
+
+<section class="panel">
+    {{/*
+        Filtros. Com o HTMX, digitar na busca, trocar a categoria ou a quantidade por página recarrega
+        só a tabela (#items-results), sem recarregar a página. Sem JavaScript, o formulário funciona
+        como um GET comum. A ordenação atual vai junto pelos campos ocultos dentro da tabela
+        (atributo form="items-filter"); a página volta para a 1 a cada novo filtro.
+    */}}
+    <form class="panel-toolbar" id="items-filter" method="get" action="/items" role="search"
+          hx-get="/items" hx-target="#items-results" hx-select="#items-results"
+          hx-swap="outerHTML" hx-push-url="true" hx-sync="this:replace" hx-indicator="#items-results">
+        <div class="panel-toolbar-filters">
+            {{template "components/search_input" (dict
+                "ID" "item-search"
+                "Name" "name"
+                "Value" .Filter.Name
+                "Label" "Buscar item por nome"
+                "Placeholder" "Buscar por nome…"
+                "Error" (.Errors.Get "name")
+                "HtmxURL" "/items"
+            )}}
+
+            {{template "components/filter_select" (dict
+                "ID" "item-category-filter"
+                "Name" "category_id"
+                "Label" "Filtrar por categoria"
+                "Options" .CategoryOptions
+                "AllLabel" "Todas as categorias"
+                "HtmxURL" "/items"
+            )}}
+        </div>
+
+        <label class="per-page-field">
+            <span>Por página</span>
+            <select class="form-select form-select-sm" name="per_page"
+                    hx-get="/items" hx-trigger="change" hx-include="closest form">
+                {{range .PerPageOptions}}
+                <option value="{{.}}"{{if eq . $.Filter.PerPage}} selected{{end}}>{{.}}</option>
+                {{end}}
+            </select>
+        </label>
+
+        <noscript><button class="btn btn-primary btn-sm" type="submit">Filtrar</button></noscript>
+    </form>
+
+    <div id="items-results" class="panel-results"
+         hx-boost="true" hx-target="#items-results" hx-select="#items-results" hx-swap="outerHTML">
+
+        <input type="hidden" name="sort" value="{{.Filter.Sort}}" form="items-filter">
+        <input type="hidden" name="direction" value="{{.Filter.Direction}}" form="items-filter">
+
+        {{template "components/validation_alert" .Errors}}
+
+        {{if .Items}}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        {{range .Columns}}{{template "components/sortable_header" .}}{{end}}
+                        <th scope="col" class="cell-actions"><span class="visually-hidden">Ações</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Items}}
+                    <tr>
+                        <td>
+                            <div class="cell-entity">
+                                <span class="entity-avatar">{{template "components/icon" "box"}}</span>
+                                <div>
+                                    <span class="entity-name">{{.Name}}</span>
+                                    <span class="entity-id">#{{.ID}}{{with .Description}} · {{.}}{{end}}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {{/* hx-boost="false": recarrega a página inteira, para o filtro de categoria acompanhar */}}
+                            <a class="category-chip" href="/items?category_id={{.CategoryID}}" hx-boost="false"
+                               title="Ver só os itens de {{.Category.Name}}">
+                                {{template "components/icon" "tag"}}{{.Category.Name}}
+                            </a>
+                        </td>
+                        <td>
+                            {{if .InStock}}<span class="quantity-value">{{.Quantity}}</span>
+                            {{else}}<span class="stock-badge is-empty">Sem estoque</span>{{end}}
+                        </td>
+                        <td class="cell-date">{{.CreatedAt.Format "02/01/2006"}}<small>{{.CreatedAt.Format "15:04"}}</small></td>
+                        <td class="cell-actions">
+                            <a class="icon-button" href="/items/{{.ID}}/edit" hx-boost="false"
+                               title="Editar" aria-label="Editar {{.Name}}">{{template "components/icon" "pencil"}}</a>
+                            <button type="button" class="icon-button is-danger" title="Excluir" aria-label="Excluir {{.Name}}"
+                                    data-bs-toggle="modal" data-bs-target="#confirm-delete"
+                                    data-delete-url="/items/{{.ID}}/delete" data-delete-name="{{.Name}}">
+                                {{template "components/icon" "trash"}}
+                            </button>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        {{template "components/pagination" .Pagination}}
+
+        {{else if or .Filter.Name .Filter.CategoryID}}
+        {{template "components/empty_state" (dict
+            "Icon" "search"
+            "Title" "Nenhum item encontrado"
+            "Message" "Nenhum item corresponde aos filtros. Tente outro nome ou outra categoria."
+        )}}
+        {{else}}
+        {{template "components/empty_state" (dict
+            "Icon" "inbox"
+            "Title" "Nenhum item cadastrado"
+            "Message" "Quando você cadastrar itens, eles vão aparecer aqui."
+        )}}
+        {{end}}
+    </div>
+</section>
+
+{{template "components/confirm_delete_modal" (dict "Title" "Excluir item" "Message" "Tem certeza que deseja excluir o item")}}
+
+{{template "layout/end"}}

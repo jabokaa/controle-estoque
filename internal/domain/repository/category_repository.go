@@ -31,6 +31,9 @@ type CategoryListQuery struct {
 type CategoryRepository interface {
 	List(ctx context.Context, query CategoryListQuery) (Page[entity.Category], error)
 
+	// ListAll devolve todas as categorias, por nome (ex.: para um campo de seleção).
+	ListAll(ctx context.Context) ([]entity.Category, error)
+
 	// FindByID devolve ErrNotFound se a categoria não existir.
 	FindByID(ctx context.Context, id int64) (entity.Category, error)
 

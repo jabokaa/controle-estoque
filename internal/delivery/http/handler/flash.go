@@ -27,6 +27,16 @@ func setFlash(writer http.ResponseWriter, kind, text string) {
 	})
 }
 
+// safeReturnPath devolve path se ele for a própria listagem (listPath) ou ela com filtros
+// (listPath?...). Qualquer outra coisa vira listPath, para ninguém usar o return_to
+// para mandar o usuário a outro site.
+func safeReturnPath(path, listPath string) string {
+	if path == listPath || strings.HasPrefix(path, listPath+"?") {
+		return path
+	}
+	return listPath
+}
+
 // popFlash lê a mensagem (se houver) e apaga o cookie.
 func popFlash(writer http.ResponseWriter, httpRequest *http.Request) *flashMessage {
 	cookie, err := httpRequest.Cookie(flashCookieName)
