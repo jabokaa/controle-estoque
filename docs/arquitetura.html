@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitetura do Controle de Estoque</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: coluna única de leitura; diagrama de círculos concêntricos ao lado do mapa de pastas, fluxo de requisição embaixo */
+:root {
+  --bg: #f6f7f5;
+  --surface: #ffffff;
+  --fg: #1c2420;
+  --muted: #5b665f;
+  --line: #d9ded9;
+  --l1: #1f6f5c;  /* domínio */
+  --l2: #3d8f6e;  /* casos de uso */
+  --l3: #8fb89b;  /* adaptadores */
+  --l4: #dbe6dc;  /* frameworks */
+  --on-l1: #ffffff;
+  --on-l3: #13261c;
+  --accent: #c2611f;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121714; --surface: #1a211d; --fg: #e3e9e4; --muted: #9aa69e; --line: #2c3530;
+    --l1: #5fc4a3; --l2: #3f9c7c; --l3: #2b5e49; --l4: #1f3229;
+    --on-l1: #0d1a14; --on-l3: #e3f0e8; --accent: #f0975a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121714; --surface: #1a211d; --fg: #e3e9e4; --muted: #9aa69e; --line: #2c3530;
+  --l1: #5fc4a3; --l2: #3f9c7c; --l3: #2b5e49; --l4: #1f3229;
+  --on-l1: #0d1a14; --on-l3: #e3f0e8; --accent: #f0975a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px 64px;
+}
+main { max-width: 1040px; margin: 0 auto; display: grid; gap: 48px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(28px, 5vw, 40px); }
+h2 { font-size: 22px; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+header { display: grid; gap: 12px; }
+.lead { color: var(--muted); font-size: 17px; }
+
+.overview { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 40px; align-items: center; }
+@media (max-width: 820px) { .overview { grid-template-columns: minmax(0, 1fr); } }
+.rings { width: 100%; max-width: 420px; justify-self: center; }
+.rings text { font-family: var(--display); font-weight: 600; }
+.t-dark { fill: var(--on-l1); }
+.t-light { fill: var(--on-l3); }
+.t-sub { font-family: var(--mono) !important; font-weight: 400 !important; }
+
+.rule { display: grid; gap: 10px; }
+.rule .arrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; }
+.chip { padding: 2px 10px; border-radius: 999px; font-weight: 500; }
+.c1 { background: var(--l1); color: var(--on-l1); }
+.c2 { background: var(--l2); color: var(--on-l1); }
+.c3 { background: var(--l3); color: var(--on-l3); }
+.c4 { background: var(--l4); color: var(--fg); border: 1px solid var(--line); }
+.rule strong { color: var(--accent); }
+
+.layers { display: grid; gap: 16px; }
+.layer { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+.swatch { border-radius: 4px; }
+.layer-body { display: grid; gap: 8px; min-width: 0; }
+.layer-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.layer-head h3 { font-family: var(--display); font-size: 18px; margin: 0; }
+.layer-head .eyebrow { color: var(--muted); }
+.paths { display: flex; flex-wrap: wrap; gap: 6px; }
+.paths code { background: var(--bg); border: 1px solid var(--line); padding: 1px 8px; border-radius: 5px; overflow-wrap: anywhere; }
+.layer ul { margin: 0; padding-left: 18px; color: var(--muted); }
+
+.flow-wrap { overflow-x: auto; }
+.flow { display: flex; align-items: stretch; gap: 0; min-width: 760px; }
+.step { flex: 1; background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--c); border-radius: 8px; padding: 12px; display: grid; gap: 4px; align-content: start; }
+.step b { font-family: var(--display); font-size: 14px; }
+.step span { font-size: 12.5px; color: var(--muted); }
+.step code { font-size: 11.5px; overflow-wrap: anywhere; }
+.join { width: 26px; flex: none; display: grid; place-items: center; color: var(--muted); font-size: 18px; }
+.note { font-size: 13.5px; color: var(--muted); }
+
+.tree { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; overflow-x: auto; margin: 0; font-family: var(--mono); font-size: 13px; line-height: 1.7; }
+.tree .d { color: var(--fg); font-weight: 500; }
+.tree .cm { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<main>
+  <header>
+    <span class="eyebrow">controle-estoque · Go</span>
+    <h1>Arquitetura do Controle de Estoque</h1>
+    <p class="lead">O projeto segue a Clean Architecture: as regras de negócio do estoque ficam no centro e não sabem nada sobre HTTP, HTML ou banco de dados. Cada camada externa depende apenas das camadas mais internas.</p>
+  </header>
+
+  <section class="overview">
+    <svg class="rings" viewBox="0 0 420 420" role="img" aria-label="Círculos concêntricos das quatro camadas">
+      <circle cx="210" cy="210" r="205" fill="var(--l4)" stroke="var(--line)"/>
+      <circle cx="210" cy="210" r="155" fill="var(--l3)"/>
+      <circle cx="210" cy="210" r="105" fill="var(--l2)"/>
+      <circle cx="210" cy="210" r="56" fill="var(--l1)"/>
+      <text x="210" y="36" text-anchor="middle" font-size="15" fill="var(--fg)">Frameworks e Drivers</text>
+      <text x="210" y="54" text-anchor="middle" font-size="11" class="t-sub" fill="var(--muted)">cmd · web · net/http · banco</text>
+      <text x="210" y="84" text-anchor="middle" font-size="15" class="t-light">Adaptadores</text>
+      <text x="210" y="102" text-anchor="middle" font-size="11" class="t-light t-sub">delivery · infrastructure</text>
+      <text x="210" y="134" text-anchor="middle" font-size="15" class="t-dark">Casos de Uso</text>
+      <text x="210" y="151" text-anchor="middle" font-size="11" class="t-dark t-sub">usecase</text>
+      <text x="210" y="207" text-anchor="middle" font-size="16" class="t-dark">Domínio</text>
+      <text x="210" y="225" text-anchor="middle" font-size="11" class="t-dark t-sub">domain</text>
+      <path d="M 210 400 L 210 280" stroke="var(--accent)" stroke-width="2.5" fill="none"/>
+      <path d="M 203 290 L 210 276 L 217 290 Z" fill="var(--accent)"/>
+      <text x="220" y="378" font-size="11" fill="var(--accent)" class="t-sub">dependências</text>
+      <text x="220" y="392" font-size="11" fill="var(--accent)" class="t-sub">apontam p/ dentro</text>
+    </svg>
+
+    <div class="rule">
+      <span class="eyebrow">A regra de dependência</span>
+      <h2>O código só pode importar camadas mais internas</h2>
+      <p>Um handler HTTP pode chamar um caso de uso. Um caso de uso nunca importa um pacote HTTP ou SQL. Para chegar ao banco, o caso de uso usa uma <strong>interface</strong> definida no domínio, e a infraestrutura fornece a implementação.</p>
+      <div class="arrow">
+        <span class="chip c4">cmd / web</span> →
+        <span class="chip c3">delivery · infrastructure</span> →
+        <span class="chip c2">usecase</span> →
+        <span class="chip c1">domain</span>
+      </div>
+      <p class="note">Com isso você pode trocar o banco (SQLite → Postgres) ou o front (templates → API JSON) sem mexer nas regras do estoque, e testar os casos de uso com repositórios falsos em memória.</p>
+    </div>
+  </section>
+
+  <section class="layers">
+    <span class="eyebrow">Cada camada, de dentro para fora</span>
+
+    <article class="layer">
+      <div class="swatch" style="background: var(--l1)"></div>
+      <div class="layer-body">
+        <div class="layer-head"><h3>Domínio</h3><span class="eyebrow">Entidades e contratos</span></div>
+        <div class="paths"><code>internal/domain/entity</code><code>internal/domain/repository</code></div>
+        <p>O coração do sistema. Aqui ficam as entidades do estoque e as regras que valem sempre, como "a quantidade de um produto nunca fica negativa". Também ficam as interfaces de repositório, que dizem <em>o que</em> precisa ser salvo, mas não <em>como</em>.</p>
+        <ul>
+          <li><code>entity</code>: <code>Produto</code>, <code>Movimentacao</code> (entrada/saída), <code>Categoria</code></li>
+          <li><code>repository</code>: <code>ProdutoRepository</code> com <code>Salvar</code>, <code>BuscarPorID</code>, <code>Listar</code></li>
+          <li>Não importa nada além da biblioteca padrão.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="layer">
+      <div class="swatch" style="background: var(--l2)"></div>
+      <div class="layer-body">
+        <div class="layer-head"><h3>Casos de Uso</h3><span class="eyebrow">Regras da aplicação</span></div>
+        <div class="paths"><code>internal/usecase</code></div>
+        <p>Cada caso de uso é uma ação que o usuário faz no sistema. Ele coordena entidades e repositórios para cumprir a tarefa, recebendo os repositórios por injeção de dependência.</p>
+        <ul>
+          <li>Cadastrar produto, registrar entrada, registrar saída, listar estoque baixo</li>
+          <li>Depende só de <code>domain</code>. Não sabe se foi chamado por uma página web, uma API ou um teste.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="layer">
+      <div class="swatch" style="background: var(--l3)"></div>
+      <div class="layer-body">
+        <div class="layer-head"><h3>Adaptadores</h3><span class="eyebrow">Entrada e saída</span></div>
+        <div class="paths"><code>internal/delivery/http/router</code><code>internal/delivery/http/handler</code><code>internal/infrastructure/repository</code><code>internal/infrastructure/database</code></div>
+        <p>Traduzem o mundo externo para a linguagem do domínio e vice-versa.</p>
+        <ul>
+          <li><b>delivery</b> (entrada): o <code>router</code> registra as rotas e o <code>handler</code> lê o formulário, chama o caso de uso e renderiza o template HTML.</li>
+          <li><b>infrastructure</b> (saída): <code>database</code> abre a conexão; <code>repository</code> implementa as interfaces do domínio com SQL.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="layer">
+      <div class="swatch" style="background: var(--l4); border: 1px solid var(--line)"></div>
+      <div class="layer-body">
+        <div class="layer-head"><h3>Frameworks e Drivers</h3><span class="eyebrow">Detalhes técnicos</span></div>
+        <div class="paths"><code>cmd/server</code><code>web/templates</code><code>web/static</code></div>
+        <p>A borda do sistema: ferramentas e arquivos que podem ser trocados sem afetar o negócio.</p>
+        <ul>
+          <li><code>cmd/server/main.go</code>: ponto de entrada e <em>composition root</em>. Cria o banco, os repositórios, os casos de uso e os handlers, e liga tudo.</li>
+          <li><code>web/</code>: o front em Go, com templates <code>html/template</code> e CSS.</li>
+          <li><code>net/http</code> e o driver do banco de dados.</li>
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <section class="layers">
+    <span class="eyebrow">Exemplo: registrar a saída de 5 unidades</span>
+    <h2>O caminho de uma requisição</h2>
+    <div class="flow-wrap">
+      <div class="flow">
+        <div class="step" style="--c: var(--l4)"><b>Navegador</b><span>Envia o formulário</span><code>POST /produtos/42/saida</code></div>
+        <div class="join">→</div>
+        <div class="step" style="--c: var(--l3)"><b>Router</b><span>Encontra o handler</span><code>router.go</code></div>
+        <div class="join">→</div>
+        <div class="step" style="--c: var(--l3)"><b>Handler</b><span>Lê os dados e chama o caso de uso</span><code>handler/</code></div>
+        <div class="join">→</div>
+        <div class="step" style="--c: var(--l2)"><b>Caso de uso</b><span>Valida o saldo e registra a saída</span><code>usecase/</code></div>
+        <div class="join">→</div>
+        <div class="step" style="--c: var(--l1)"><b>Interface</b><span>ProdutoRepository.Salvar</span><code>domain/repository</code></div>
+        <div class="join">⇢</div>
+        <div class="step" style="--c: var(--l3)"><b>Repositório SQL</b><span>Implementa a interface</span><code>infrastructure/</code></div>
+      </div>
+    </div>
+    <p class="note">A seta tracejada indica que o caso de uso só conhece a interface. Em tempo de execução, o <code>main.go</code> injeta a implementação SQL. O handler então renderiza <code>web/templates</code> com o resultado.</p>
+  </section>
+
+  <section class="layers">
+    <span class="eyebrow">Estrutura de pastas</span>
+<pre class="tree"><span class="d">controle-estoque/</span>
+├── <span class="d">cmd/server/</span>main.go                 <span class="cm"># entrada + injeção de dependências</span>
+├── <span class="d">internal/</span>
+│   ├── <span class="d">domain/</span>
+│   │   ├── <span class="d">entity/</span>                    <span class="cm"># entidades de negócio</span>
+│   │   └── <span class="d">repository/</span>                <span class="cm"># interfaces de persistência</span>
+│   ├── <span class="d">usecase/</span>                       <span class="cm"># casos de uso</span>
+│   ├── <span class="d">delivery/http/</span>
+│   │   ├── <span class="d">router/</span>                    <span class="cm"># rotas</span>
+│   │   └── <span class="d">handler/</span>                   <span class="cm"># handlers HTTP + render</span>
+│   └── <span class="d">infrastructure/</span>
+│       ├── <span class="d">database/</span>                  <span class="cm"># conexão com o banco</span>
+│       └── <span class="d">repository/</span>                <span class="cm"># implementações SQL</span>
+├── <span class="d">web/</span>
+│   ├── <span class="d">templates/</span>                     <span class="cm"># páginas HTML (front em Go)</span>
+│   └── <span class="d">static/css/</span>                    <span class="cm"># estilos</span>
+└── go.mod</pre>
+  </section>
+</main>
+</body>
+</html>
