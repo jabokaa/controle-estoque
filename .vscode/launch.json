@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Servidor",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/server",
+      "cwd": "${workspaceFolder}",
+      "output": "${workspaceFolder}/bin/debug-server.exe"
+    },
+    {
+      "name": "Testes do pacote aberto",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${fileDirname}",
+      "cwd": "${workspaceFolder}",
+      "output": "${workspaceFolder}/bin/debug-test.exe"
+    }
+  ]
+}

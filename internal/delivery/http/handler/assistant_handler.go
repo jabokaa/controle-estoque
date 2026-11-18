@@ -15,6 +15,7 @@ const (
 
 	// maxRequestSize corta envios gigantes antes de lê-los (proteção do servidor).
 	// As regras de cada arquivo (tipo, tamanho, quantidade) ficam no SendAssistantMessageRequest.
+	// 16 * 2²⁰ = 16 MB
 	maxRequestSize = 16 << 20
 )
 
